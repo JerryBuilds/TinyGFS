@@ -5,11 +5,11 @@ import com.master.Node;
 import java.util.ArrayList;
 
 
-public class Tree<T> {
-	public Node<T> root;
+public class Tree {
+	public Node root;
 	
-	public Tree(T rootData) {
-		root = new Node<T>();
+	public Tree(Location rootData) {
+		root = new Node();
 		root.SetData(rootData);
 	}
 	

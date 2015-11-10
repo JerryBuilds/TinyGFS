@@ -1,5 +1,7 @@
 package com.client;
 
+import com.master.Master;
+
 public class ClientFS {
 
 	public enum FSReturnVals {
@@ -17,6 +19,10 @@ public class ClientFS {
 		Success, //Returned when a method succeeds
 		Fail //Returned when a method fails
 	}
+	Master ms;
+	public ClientFS() {
+		ms = new Master();
+	}
 
 	/**
 	 * Creates the specified dirname in the src directory Returns
@@ -27,7 +33,8 @@ public class ClientFS {
 	 * "CSCI485"), CreateDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals CreateDir(String src, String dirname) {
-		return null;
+		return ms.CreateDir(src, dirname);
+		//return null;
 	}
 
 	/**
@@ -61,7 +68,8 @@ public class ClientFS {
 	 * Example usage: ListDir("/Shahram/CSCI485")
 	 */
 	public String[] ListDir(String tgt) {
-		return null;
+		return ms.ListDir(tgt);
+		//return null;
 	}
 
 	/**

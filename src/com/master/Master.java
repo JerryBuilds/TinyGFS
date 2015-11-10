@@ -9,17 +9,20 @@ import java.util.Scanner;
 
 public class Master {
 	
-	Tree<String> namespace;
+	Tree namespace;
 	
 	public Master() {
 		// initialize all data structure
 		
-		namespace = new Tree<String>("/");
+		Directory rootdir = new Directory();
+		rootdir.name = "/";
+		rootdir.fulldirpath = "/";
+		namespace = new Tree(rootdir);
 		
 	}
 	
 	public FSReturnVals CreateDir(String src, String dirname) {
-		Node<String> parentNode = namespace.root;
+		Node parentNode = namespace.root;
 		
 		ArrayList<String> path = ParsePath(src);
 		
@@ -28,16 +31,25 @@ public class Master {
 			return FSReturnVals.SrcDirNotExistent;
 		}
 		
+		Directory newDirectory = new Directory();
+		newDirectory.name = dirname;
+		newDirectory.fulldirpath = src + dirname;
+		
+		// make sure the passed-in directory has a '/' at end
+		if (dirname.charAt(dirname.length() - 1) != '/') {
+			dirname += '/';
+		}
+		
 		// find the proper parent node
 		// if the path is invalid, returns error
 		for (int i=1; i < path.size(); i++) {
-			parentNode = parentNode.Get(path.get(i));
+			parentNode = parentNode.GetChild(path.get(i).substring(0, path.get(i).length()-1));
 			if (parentNode == null) {
 				return FSReturnVals.SrcDirNotExistent;
 			}
 		}
 		
-		parentNode.AddChild(dirname);
+		parentNode.AddChild(newDirectory);
 		
 		return FSReturnVals.Success;
 	}
@@ -51,7 +63,12 @@ public class Master {
 	}
 	
 	public String[] ListDir(String tgt) {
-		Node<String> parentNode = namespace.root;
+		Node parentNode = namespace.root;
+		
+		// make sure the passed-in directory has a '/' at end
+		if (tgt.charAt(tgt.length() - 1) != '/') {
+			tgt += '/';
+		}
 		
 		ArrayList<String> path = ParsePath(tgt);
 		
@@ -63,17 +80,17 @@ public class Master {
 		// find the proper parent node
 		// if the path is invalid, returns error
 		for (int i=1; i < path.size(); i++) {
-			parentNode = parentNode.Get(path.get(i));
+			parentNode = parentNode.GetChild(path.get(i).substring(0, path.get(i).length()-1));
 			if (parentNode == null) {
 				return null;
 			}
 		}
 		
-		ArrayList<Node<String>> allchildren = parentNode.GetChildren();
+		ArrayList<Node> allDescendants = parentNode.GetAllDescendants();
 		
-		String[] ls = new String[allchildren.size()];
+		String[] ls = new String[allDescendants.size()];
 		for (int i=0; i < ls.length; i++) {
-			ls[i] = allchildren.get(i).GetData();
+			ls[i] = allDescendants.get(i).GetData().fulldirpath;
 		}
 		
 		return ls;
