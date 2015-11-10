@@ -27,7 +27,7 @@ public class UnitTest2 {
 		System.out.println(TestName + "DeleteDir(\"/Shahram/N\"), ListDir(\"/Shahram\") and verify direcotry N is gone (success)");
 		String dir1 = "Shahram";
 		FSReturnVals fsrv = cfs.DeleteDir("/" + dir1 + "/", String.valueOf(N));
-		String[] ret1 = cfs.ListDir(dir1);
+		String[] ret1 = cfs.ListDir("/" + dir1);
 		
 		boolean isExist = isDirExist(ret1, "/" + dir1+"/"+N);
 		if(isExist == true){

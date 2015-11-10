@@ -45,7 +45,8 @@ public class ClientFS {
 	 * Example usage: DeleteDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		return null;
+		return ms.DeleteDir(src, dirname);
+		//return null;
 	}
 
 	/**

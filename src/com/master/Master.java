@@ -35,18 +35,22 @@ public class Master {
 		newDirectory.name = dirname;
 		newDirectory.fulldirpath = src + dirname;
 		
-		// make sure the passed-in directory has a '/' at end
-		if (dirname.charAt(dirname.length() - 1) != '/') {
-			dirname += '/';
-		}
-		
 		// find the proper parent node
 		// if the path is invalid, returns error
+		String currentdir;
 		for (int i=1; i < path.size(); i++) {
-			parentNode = parentNode.GetChild(path.get(i).substring(0, path.get(i).length()-1));
+			currentdir = path.get(i).substring(0, path.get(i).length()-1);
+			parentNode = parentNode.GetChild(currentdir);
 			if (parentNode == null) {
 				return FSReturnVals.SrcDirNotExistent;
 			}
+		}
+		
+		// checks if directory already exists
+		// if so, then return error
+		currentdir = dirname;
+		if (parentNode.GetChild(currentdir) != null) {
+			return FSReturnVals.DestDirExists;
 		}
 		
 		parentNode.AddChild(newDirectory);
@@ -55,7 +59,36 @@ public class Master {
 	}
 	
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		return null;
+		Node parentNode = namespace.root;
+		
+		ArrayList<String> path = ParsePath(src);
+		
+		// if the first directory is not root, returns error
+		if (!path.get(0).equals("/")) {
+			return FSReturnVals.SrcDirNotExistent;
+		}
+		
+		// find the proper parent node
+		// if the path is invalid, returns error
+		String currentdir;
+		for (int i=1; i < path.size(); i++) {
+			currentdir = path.get(i).substring(0, path.get(i).length()-1);
+			parentNode = parentNode.GetChild(currentdir);
+			if (parentNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+		}
+		
+		// if directory is not empty, CANNOT DELETE!!
+		ArrayList<Node> children = parentNode.GetChild(dirname).GetChildren();
+		if (!children.isEmpty()) {
+			return FSReturnVals.DirNotEmpty;
+		}
+		
+		
+		parentNode.RemoveChild(dirname);
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals RenameDir(String src, String NewName) {
