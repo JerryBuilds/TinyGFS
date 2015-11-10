@@ -3,6 +3,8 @@ package com.master;
 import com.client.FileHandle;
 import com.client.ClientFS.FSReturnVals;
 
+import java.util.Scanner;
+
 public class Master {
 	
 	public Master() {
@@ -46,6 +48,46 @@ public class Master {
 	
 	public static void CommandLine() {
 		// open a shell to process terminal directory commands
+		Scanner scan = new Scanner(System.in);
+		String input;
+		String [] args;
+		
+		
+		// supports the following commands:
+		// mkdir <filename>
+		// rmdir <filename>
+		// mv <filename>
+		// ls
+		// quit
+		
+		while (true) {
+			// input
+			System.out.print(">>> ");
+			input = scan.nextLine();
+			
+			args = input.split(" ");
+			
+			if (args[0].equals("ls")) {
+				System.out.println("Used ls command");
+			}
+			else if (args[0].equals("mkdir")) {
+				System.out.println("Used mkdir command with " + args[1] + " argument");
+			}
+			else if (args[0].equals("rmdir")) {
+				System.out.println("Used rmdir command with " + args[1] + " argument");
+			}
+			else if (args[0].equals("mv")) {
+				System.out.println("Used mv command with " + args[1] + " argument");
+			}
+			else if (args[0].equals("quit")) {
+				System.out.println("Exiting");
+				break;
+			}
+			else {
+				System.out.println("Invalid command...");
+			}
+			
+		}
 	}
 	
 	
