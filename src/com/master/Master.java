@@ -1,20 +1,45 @@
 package com.master;
 
 import com.client.FileHandle;
+import com.master.Node;
 import com.client.ClientFS.FSReturnVals;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Master {
 	
+	Tree<String> namespace;
+	
 	public Master() {
 		// initialize all data structure
 		
+		namespace = new Tree<String>("/");
 		
 	}
 	
 	public FSReturnVals CreateDir(String src, String dirname) {
-		return null;
+		Node<String> parentNode = namespace.root;
+		
+		ArrayList<String> path = ParsePath(src);
+		
+		// if the first directory is not root, returns error
+		if (!path.get(0).equals("/")) {
+			return FSReturnVals.SrcDirNotExistent;
+		}
+		
+		// find the proper parent node
+		// if the path is invalid, returns error
+		for (int i=1; i < path.size(); i++) {
+			parentNode = parentNode.Get(path.get(i));
+			if (parentNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+		}
+		
+		parentNode.AddChild(dirname);
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals DeleteDir(String src, String dirname) {
@@ -26,7 +51,32 @@ public class Master {
 	}
 	
 	public String[] ListDir(String tgt) {
-		return null;
+		Node<String> parentNode = namespace.root;
+		
+		ArrayList<String> path = ParsePath(tgt);
+		
+		// if the first directory is not root, returns error
+		if (!path.get(0).equals("/")) {
+			return null;
+		}
+		
+		// find the proper parent node
+		// if the path is invalid, returns error
+		for (int i=1; i < path.size(); i++) {
+			parentNode = parentNode.Get(path.get(i));
+			if (parentNode == null) {
+				return null;
+			}
+		}
+		
+		ArrayList<Node<String>> allchildren = parentNode.GetChildren();
+		
+		String[] ls = new String[allchildren.size()];
+		for (int i=0; i < ls.length; i++) {
+			ls[i] = allchildren.get(i).GetData();
+		}
+		
+		return ls;
 	}
 	
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
@@ -45,9 +95,8 @@ public class Master {
 		return null;
 	}
 	
-	
-	public static void CommandLine() {
-		// open a shell to process terminal directory commands
+	// open a shell to process terminal directory commands
+	public void CommandLine() {
 		Scanner scan = new Scanner(System.in);
 		String input;
 		String [] args;
@@ -68,9 +117,16 @@ public class Master {
 			args = input.split(" ");
 			
 			if (args[0].equals("ls")) {
+				String[] dirs = ListDir("/");
+				for (int i=0; i < dirs.length; i++) {
+					System.out.println(dirs[i]);
+				}
+				
 				System.out.println("Used ls command");
 			}
 			else if (args[0].equals("mkdir")) {
+				CreateDir("/", args[1]);
+				
 				System.out.println("Used mkdir command with " + args[1] + " argument");
 			}
 			else if (args[0].equals("rmdir")) {
@@ -83,6 +139,12 @@ public class Master {
 				System.out.println("Exiting");
 				break;
 			}
+			else if (args[0].equals("parsepath")) {
+				ArrayList<String> parsedpath = ParsePath(args[1]);
+				for (int i=0; i < parsedpath.size(); i++) {
+					System.out.println(parsedpath.get(i));
+				}
+			}
 			else {
 				System.out.println("Invalid command...");
 			}
@@ -90,16 +152,36 @@ public class Master {
 		}
 	}
 	
-	
+	// process client requests through socket programming
 	public void ReadAndProcessRequests() {
-		// process client requests through networking
-		// socket programming
+		
 		
 		
 	}
 	
+	// given a path, returns a list of each directory
+	public ArrayList<String> ParsePath(String path) {
+		ArrayList<String> directories = new ArrayList<String>();
+		
+		int leftbound = 0, rightbound = 0;
+		for (int i=0; i < path.length(); i++) {
+			if (path.charAt(i) == '/') {
+				rightbound = i+1;
+				directories.add(path.substring(leftbound, rightbound));
+				leftbound = i+1;
+			}
+		}
+		
+		if (rightbound != path.length()) {
+			directories.add(path.substring(leftbound));
+		}
+		
+		
+		return directories;
+	}
+	
 	public static void main(String [] args) {
 		Master ms = new Master();
-		CommandLine();
+		ms.CommandLine();
 	}
 }
