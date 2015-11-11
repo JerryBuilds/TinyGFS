@@ -47,7 +47,7 @@ public class UnitTest3 {
 		System.out.println(TestName + "CreateFile /Shahram/2/Lecture1, /Shahram/2/Lecture2, ...., /Shahram/2/Lecture15");
 		String dir2 = "Shahram";
 		for(int i = 1; i <= N; i++){
-			fsrv = cfs.CreateFile("/" + dir2 + "/2/", "Lecture" + i);
+			fsrv = cfs.CreateFile("/" + dir2 + "/2i/", "Lecture" + i);
 			if( fsrv != FSReturnVals.Success ){
 				System.out.println("Unit test 3 result: fail!");
 	    		return;
@@ -56,7 +56,7 @@ public class UnitTest3 {
 		
 		System.out.println(TestName + "DeleteFile /Shahram/2/Lecture1, /Shahram/2/Lecture2, ...., /Shahram/2/Lecture15");
 		for(int i = 1; i <= N; i++){
-			fsrv = cfs.DeleteFile("/" + dir2 + "/2/", "Lecture" + i);
+			fsrv = cfs.DeleteFile("/" + dir2 + "/2i/", "Lecture" + i);
 			if( fsrv != FSReturnVals.Success ){
 				System.out.println("Unit test 3 result: fail!");
 	    		return;
