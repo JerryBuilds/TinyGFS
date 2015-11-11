@@ -54,7 +54,7 @@ public class ClientFS {
 	 * Returns SrcDirNotExistent if the src directory does not exist Returns
 	 * DestDirExists if a directory with NewName exists in the specified path
 	 *
-	 * Example usage: RenameDir("/Shahram/CSCI485", "CSCI550") changes
+	 * Example usage: RenameDir("/Shahram/CSCI485", "/Shahram/CSCI550") changes
 	 * "/Shahram/CSCI485" to "/Shahram/CSCI550"
 	 */
 	public FSReturnVals RenameDir(String src, String NewName) {

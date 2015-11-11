@@ -94,6 +94,17 @@ public class Master {
 		Node currentNode = namespace.root;
 		
 		ArrayList<String> path = ParsePath(src);
+		ArrayList<String> newpath = ParsePath(NewName);
+		
+		// check if both give the same number of levels and are all same up to the last one
+		if (path.size() != newpath.size()) {
+			return FSReturnVals.Fail;
+		}
+		for (int i=0; i < path.size()-1; i++) {
+			if (!path.get(i).equals(newpath.get(i))) {
+				return FSReturnVals.Fail;
+			}
+		}
 		
 		// if the first directory is not root, returns error
 		if (!path.get(0).equals("/")) {
@@ -108,21 +119,14 @@ public class Master {
 			if (i != path.size()-1) {
 				currentdir = currentdir.substring(0, currentdir.length()-1);
 			}
-//			currentdir = path.get(i).substring(0, path.get(i).length()-1);
 			currentNode = currentNode.GetChild(currentdir);
 			if (currentNode == null) {
 				return FSReturnVals.SrcDirNotExistent;
 			}
 		}
 		
-		// check if the current directory exists
-		/*currentdir = path.get(path.size()-1);
-		if (!currentNode.GetData().name.equals(currentdir)) {
-			return FSReturnVals.SrcDirNotExistent;
-		}*/
-		
 		// rename the current directory
-		currentNode.SetName(NewName);
+		currentNode.SetName(newpath.get(newpath.size()-1));
 		
 		return FSReturnVals.Success;
 	}
