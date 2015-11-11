@@ -1,6 +1,7 @@
 package com.client;
 
 import com.master.Master;
+import com.chunkserver.*;
 
 public class ClientFS {
 
@@ -19,9 +20,13 @@ public class ClientFS {
 		Success, //Returned when a method succeeds
 		Fail //Returned when a method fails
 	}
-	Master ms;
+	public static Master master;
+	public static ChunkServer chunkserver1;
+	public static Client client;
 	public ClientFS() {
-		ms = new Master();
+		master = new Master();
+		chunkserver1 = new ChunkServer();
+		client = new Client();
 	}
 
 	/**
@@ -33,7 +38,7 @@ public class ClientFS {
 	 * "CSCI485"), CreateDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals CreateDir(String src, String dirname) {
-		return ms.CreateDir(src, dirname);
+		return master.CreateDir(src, dirname);
 		//return null;
 	}
 
@@ -45,7 +50,7 @@ public class ClientFS {
 	 * Example usage: DeleteDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		return ms.DeleteDir(src, dirname);
+		return master.DeleteDir(src, dirname);
 		//return null;
 	}
 
@@ -58,7 +63,7 @@ public class ClientFS {
 	 * "/Shahram/CSCI485" to "/Shahram/CSCI550"
 	 */
 	public FSReturnVals RenameDir(String src, String NewName) {
-		return ms.RenameDir(src, NewName);
+		return master.RenameDir(src, NewName);
 		//return null;
 	}
 
@@ -70,7 +75,7 @@ public class ClientFS {
 	 * Example usage: ListDir("/Shahram/CSCI485")
 	 */
 	public String[] ListDir(String tgt) {
-		return ms.ListDir(tgt);
+		return master.ListDir(tgt);
 		//return null;
 	}
 
@@ -82,7 +87,7 @@ public class ClientFS {
 	 * Example usage: Createfile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		return ms.CreateFile(tgtdir, filename);
+		return master.CreateFile(tgtdir, filename);
 		//return null;
 	}
 
@@ -94,7 +99,7 @@ public class ClientFS {
 	 * Example usage: DeleteFile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		return ms.DeleteFile(tgtdir, filename);
+		return master.DeleteFile(tgtdir, filename);
 		//return null;
 	}
 
