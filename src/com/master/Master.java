@@ -15,8 +15,7 @@ public class Master {
 		// initialize all data structure
 		
 		Directory rootdir = new Directory();
-		rootdir.name = "/";
-		rootdir.fulldirpath = "/";
+		rootdir.name = "";
 		namespace = new Tree(rootdir);
 		
 	}
@@ -33,7 +32,6 @@ public class Master {
 		
 		Directory newDirectory = new Directory();
 		newDirectory.name = dirname;
-		newDirectory.fulldirpath = src + dirname;
 		
 		// find the proper parent node
 		// if the path is invalid, returns error
@@ -53,6 +51,7 @@ public class Master {
 			return FSReturnVals.DestDirExists;
 		}
 		
+		// add the new directory
 		parentNode.AddChild(newDirectory);
 		
 		return FSReturnVals.Success;
@@ -85,14 +84,47 @@ public class Master {
 			return FSReturnVals.DirNotEmpty;
 		}
 		
-		
+		// remove the directory
 		parentNode.RemoveChild(dirname);
 		
 		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals RenameDir(String src, String NewName) {
-		return null;
+		Node currentNode = namespace.root;
+		
+		ArrayList<String> path = ParsePath(src);
+		
+		// if the first directory is not root, returns error
+		if (!path.get(0).equals("/")) {
+			return FSReturnVals.SrcDirNotExistent;
+		}
+		
+		// find the proper parent node
+		// if the path is invalid, returns error
+		String currentdir = "";
+		for (int i=1; i < path.size(); i++) {
+			currentdir = path.get(i);
+			if (i != path.size()-1) {
+				currentdir = currentdir.substring(0, currentdir.length()-1);
+			}
+//			currentdir = path.get(i).substring(0, path.get(i).length()-1);
+			currentNode = currentNode.GetChild(currentdir);
+			if (currentNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+		}
+		
+		// check if the current directory exists
+		/*currentdir = path.get(path.size()-1);
+		if (!currentNode.GetData().name.equals(currentdir)) {
+			return FSReturnVals.SrcDirNotExistent;
+		}*/
+		
+		// rename the current directory
+		currentNode.SetName(NewName);
+		
+		return FSReturnVals.Success;
 	}
 	
 	public String[] ListDir(String tgt) {
@@ -123,7 +155,7 @@ public class Master {
 		
 		String[] ls = new String[allDescendants.size()];
 		for (int i=0; i < ls.length; i++) {
-			ls[i] = allDescendants.get(i).GetData().fulldirpath;
+			ls[i] = allDescendants.get(i).GetFullPath();
 		}
 		
 		return ls;

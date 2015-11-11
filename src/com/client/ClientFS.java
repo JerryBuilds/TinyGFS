@@ -58,7 +58,8 @@ public class ClientFS {
 	 * "/Shahram/CSCI485" to "/Shahram/CSCI550"
 	 */
 	public FSReturnVals RenameDir(String src, String NewName) {
-		return null;
+		return ms.RenameDir(src, NewName);
+		//return null;
 	}
 
 	/**

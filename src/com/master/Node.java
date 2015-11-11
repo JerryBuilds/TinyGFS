@@ -24,6 +24,10 @@ public class Node {
 		data = nodeData;
 	}
 	
+	public void SetName(String newname) {
+		data.name = newname;
+	}
+	
 	// adds a new child
 	// returns the child
 	public Node AddChild(Location childData) {
@@ -45,6 +49,15 @@ public class Node {
 			}
 		}
 		return false;
+	}
+	
+	// traverses all parents and appends all strings to
+	// return the full path
+	public String GetFullPath() {
+		if (data.name.equals("")) {
+			return "";
+		}
+		return parent.GetFullPath() + '/' + data.name;
 	}
 	
 	// iterates through children and returns child
