@@ -14,9 +14,8 @@ public class ClientRec {
 	 */
 	public FSReturnVals AppendRecord(FileHandle ofh, byte[] payload, RID RecordID) {
 		
-		// Jerry's comment
-		// Stella's comment
-		// Josh's comment
+		ClientFS.master.AppendRecord(ofh, RecordID);
+		
 		return null;
 	}
 

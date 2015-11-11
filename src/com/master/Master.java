@@ -1,6 +1,7 @@
 package com.master;
 
 import com.client.FileHandle;
+import com.client.RID;
 import com.master.Node;
 import com.client.ClientFS.FSReturnVals;
 
@@ -21,82 +22,54 @@ public class Master {
 	}
 	
 	public FSReturnVals CreateDir(String src, String dirname) {
-		Node parentNode = namespace.root;
-		
-		ArrayList<String> path = ParsePath(src);
-		
-		// if the first directory is not root, returns error
-		if (!path.get(0).equals("/")) {
+		// get node
+		Node newNode = GetNode(src);
+		if (newNode == null) {
 			return FSReturnVals.SrcDirNotExistent;
 		}
 		
+		// check if directory already exists
+		if (newNode.GetChild(dirname) != null) {
+			return FSReturnVals.DirExists;
+		}
+		
+		// add directory
 		Directory newDirectory = new Directory();
 		newDirectory.name = dirname;
-		
-		// find the proper parent node
-		// if the path is invalid, returns error
-		String currentdir;
-		for (int i=1; i < path.size(); i++) {
-			currentdir = path.get(i).substring(0, path.get(i).length()-1);
-			parentNode = parentNode.GetChild(currentdir);
-			if (parentNode == null) {
-				return FSReturnVals.SrcDirNotExistent;
-			}
-		}
-		
-		// checks if directory already exists
-		// if so, then return error
-		currentdir = dirname;
-		if (parentNode.GetChild(currentdir) != null) {
-			return FSReturnVals.DestDirExists;
-		}
-		
-		// add the new directory
-		parentNode.AddChild(newDirectory);
+		newNode.AddChild(newDirectory);
 		
 		return FSReturnVals.Success;
 	}
 	
+	// src must have '/' at the end of each directory
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		Node parentNode = namespace.root;
-		
-		ArrayList<String> path = ParsePath(src);
-		
-		// if the first directory is not root, returns error
-		if (!path.get(0).equals("/")) {
+		// retrieve directory
+		Node byeNode = GetNode(src);
+		if (byeNode == null) {
 			return FSReturnVals.SrcDirNotExistent;
 		}
 		
-		// find the proper parent node
-		// if the path is invalid, returns error
-		String currentdir;
-		for (int i=1; i < path.size(); i++) {
-			currentdir = path.get(i).substring(0, path.get(i).length()-1);
-			parentNode = parentNode.GetChild(currentdir);
-			if (parentNode == null) {
-				return FSReturnVals.SrcDirNotExistent;
-			}
+		// check if directory exists
+		if (byeNode.GetChild(dirname) == null) {
+			return FSReturnVals.DirDoesNotExist;
 		}
 		
-		// if directory is not empty, CANNOT DELETE!!
-		ArrayList<Node> children = parentNode.GetChild(dirname).GetChildren();
-		if (!children.isEmpty()) {
+		// if directory is not empty, CANNOT DELETE!
+		if (!byeNode.GetChild(dirname).GetChildren().isEmpty()) {
 			return FSReturnVals.DirNotEmpty;
 		}
 		
-		// remove the directory
-		parentNode.RemoveChild(dirname);
+		// delete current directory
+		byeNode.RemoveChild(dirname);
 		
 		return FSReturnVals.Success;
 	}
 	
+	// src is FULL PATH of directory
 	public FSReturnVals RenameDir(String src, String NewName) {
-		Node currentNode = namespace.root;
-		
+		// check if both give the same number of levels and are all same up to the last one
 		ArrayList<String> path = ParsePath(src);
 		ArrayList<String> newpath = ParsePath(NewName);
-		
-		// check if both give the same number of levels and are all same up to the last one
 		if (path.size() != newpath.size()) {
 			return FSReturnVals.Fail;
 		}
@@ -106,56 +79,26 @@ public class Master {
 			}
 		}
 		
-		// if the first directory is not root, returns error
-		if (!path.get(0).equals("/")) {
+		// get node
+		Node reNode = GetNode(src);
+		if (reNode == null) {
 			return FSReturnVals.SrcDirNotExistent;
 		}
 		
-		// find the proper parent node
-		// if the path is invalid, returns error
-		String currentdir = "";
-		for (int i=1; i < path.size(); i++) {
-			currentdir = path.get(i);
-			if (i != path.size()-1) {
-				currentdir = currentdir.substring(0, currentdir.length()-1);
-			}
-			currentNode = currentNode.GetChild(currentdir);
-			if (currentNode == null) {
-				return FSReturnVals.SrcDirNotExistent;
-			}
-		}
-		
-		// rename the current directory
-		currentNode.SetName(newpath.get(newpath.size()-1));
+		// rename
+		reNode.SetName(newpath.get(newpath.size()-1));
 		
 		return FSReturnVals.Success;
 	}
 	
 	public String[] ListDir(String tgt) {
-		Node parentNode = namespace.root;
 		
-		// make sure the passed-in directory has a '/' at end
-		if (tgt.charAt(tgt.length() - 1) != '/') {
-			tgt += '/';
-		}
-		
-		ArrayList<String> path = ParsePath(tgt);
-		
-		// if the first directory is not root, returns error
-		if (!path.get(0).equals("/")) {
+		Node dirNode = GetNode(tgt);
+		if (dirNode == null) {
 			return null;
 		}
 		
-		// find the proper parent node
-		// if the path is invalid, returns error
-		for (int i=1; i < path.size(); i++) {
-			parentNode = parentNode.GetChild(path.get(i).substring(0, path.get(i).length()-1));
-			if (parentNode == null) {
-				return null;
-			}
-		}
-		
-		ArrayList<Node> allDescendants = parentNode.GetAllDescendants();
+		ArrayList<Node> allDescendants = dirNode.GetAllDescendants();
 		
 		String[] ls = new String[allDescendants.size()];
 		for (int i=0; i < ls.length; i++) {
@@ -166,82 +109,102 @@ public class Master {
 	}
 	
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		Node parentNode = namespace.root;
-		
-		ArrayList<String> path = ParsePath(tgtdir);
-		
-		// if the first directory is not root, returns error
-		if (!path.get(0).equals("/")) {
+		// get node
+		Node newNode = GetNode(tgtdir);
+		if (newNode == null) {
 			return FSReturnVals.SrcDirNotExistent;
 		}
 		
+		// check if directory already exists
+		if (newNode.GetChild(filename) != null) {
+			return FSReturnVals.FileExists;
+		}
+		
+		// add directory
 		File newFile = new File();
 		newFile.name = filename;
-		
-		// find the proper parent node
-		// if the path is invalid, returns error
-		String currentdir;
-		for (int i=1; i < path.size(); i++) {
-			currentdir = path.get(i).substring(0, path.get(i).length()-1);
-			parentNode = parentNode.GetChild(currentdir);
-			if (parentNode == null) {
-				return FSReturnVals.SrcDirNotExistent;
-			}
-		}
-		
-		// checks if directory already exists
-		// if so, then return error
-		currentdir = filename;
-		if (parentNode.GetChild(currentdir) != null) {
-			return FSReturnVals.DestDirExists;
-		}
-		
-		// add the new directory
-		parentNode.AddChild(newFile);
+		newNode.AddChild(newFile);
 		
 		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		Node parentNode = namespace.root;
+		// retrieve directory
+		Node byeNode = GetNode(tgtdir);
 		
-		ArrayList<String> path = ParsePath(tgtdir);
-		
-		// if the first directory is not root, returns error
-		if (!path.get(0).equals("/")) {
+		// if directory does not exist, return error
+		if (byeNode == null) {
 			return FSReturnVals.SrcDirNotExistent;
 		}
 		
-		// find the proper parent node
-		// if the path is invalid, returns error
-		String currentdir;
-		for (int i=1; i < path.size(); i++) {
-			currentdir = path.get(i).substring(0, path.get(i).length()-1);
-			parentNode = parentNode.GetChild(currentdir);
-			if (parentNode == null) {
-				return FSReturnVals.SrcDirNotExistent;
-			}
+		// if file does not exist, return error
+		if (byeNode.GetChild(filename) == null) {
+			return FSReturnVals.FileDoesNotExist;
 		}
 		
-		// if directory is not empty, CANNOT DELETE!!
-		ArrayList<Node> children = parentNode.GetChild(filename).GetChildren();
-		if (!children.isEmpty()) {
-			return FSReturnVals.DirNotEmpty;
-		}
-		
-		// remove the directory
-		parentNode.RemoveChild(filename);
+		// delete the file
+		byeNode.RemoveChild(filename);
 		
 		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals OpenFile(String FilePath, FileHandle ofh) {
-		return null;
+		// if invalid filepath, return error
+		Node tempNode = GetNode(FilePath);
+		if (tempNode == null) {
+			return FSReturnVals.FileDoesNotExist;
+		}
+		
+		ofh.FilePath = FilePath;
+		ofh.RIDs = null;
+		ofh.ChunkServerID = -1;
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals CloseFile(FileHandle ofh) {
+		// if invalid filepath, return error
+		Node tempNode = GetNode(ofh.FilePath);
+		if (tempNode == null) {
+			return FSReturnVals.FileDoesNotExist;
+		}
+		
+		// set all parameters of FileHandle to null
+		ofh.FilePath = null;
+		ofh.RIDs = null;
+		ofh.ChunkServerID = -1;
+		
+		return FSReturnVals.Success;
+	}
+	
+	public FSReturnVals AppendRecord(FileHandle ofh, RID RecordID) {
+		// if invalid handle, return error
+		
+		
+		
 		return null;
 	}
+	
+	public FSReturnVals DeleteRecord(FileHandle ofh, RID RecordID) {
+		return null;
+	}
+	
+	public FSReturnVals ReadFirstRecord(FileHandle ofh, byte[] payload, RID RecordID) {
+		return null;
+	}
+	
+	public FSReturnVals ReadLastRecord(FileHandle ofh, byte[] payload, RID RecordID) {
+		return null;
+	}
+	
+	public FSReturnVals ReadNextRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
+		return null;
+	}
+	
+	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
+		return null;
+	}
+	
 	
 	// open a shell to process terminal directory commands
 	public void CommandLine() {
@@ -307,25 +270,60 @@ public class Master {
 		
 	}
 	
+	/*
+	 * 
+	 * UTILITY FUNCTIONS
+	 * 
+	 */
+	
 	// given a path, returns a list of each directory
-	public ArrayList<String> ParsePath(String path) {
+	// For example, path = "/Jerry/Documents/File1"
+	// will return: { "", "Jerry", "Documents", "File1" }
+	// For example, path = "/Jerry/Documents/Homework/"
+	// will return: { "", "Jerry", "Documents", "Homework" }
+	private ArrayList<String> ParsePath(String path) {
 		ArrayList<String> directories = new ArrayList<String>();
 		
 		int leftbound = 0, rightbound = 0;
 		for (int i=0; i < path.length(); i++) {
 			if (path.charAt(i) == '/') {
-				rightbound = i+1;
+				rightbound = i;
 				directories.add(path.substring(leftbound, rightbound));
 				leftbound = i+1;
 			}
 		}
 		
-		if (rightbound != path.length()) {
+		if (rightbound != path.length()-1) {
 			directories.add(path.substring(leftbound));
 		}
 		
 		
 		return directories;
+	}
+	
+	// check filepath validity
+	private Node GetNode(String filepath) {
+		Node currentNode = namespace.root;
+		
+		ArrayList<String> path = ParsePath(filepath);
+		
+		// if the first directory is not root, returns error
+		if (!path.get(0).equals("")) {
+			return null;
+		}
+		
+		// find the proper parent node
+		// if the path is invalid, returns error
+		String nextdir;
+		for (int i=1; i < path.size(); i++) {
+			nextdir = path.get(i);
+			currentNode = currentNode.GetChild(nextdir);
+			if (currentNode == null) {
+				return null;
+			}
+		}
+		
+		return currentNode;
 	}
 	
 	public static void main(String [] args) {

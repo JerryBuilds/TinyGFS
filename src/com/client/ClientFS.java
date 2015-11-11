@@ -18,7 +18,8 @@ public class ClientFS {
 		RecDoesNotExist, // The specified record does not exist, used by DeleteRecord
 		NotImplemented, // Specific to CSCI 485 and its unit tests
 		Success, //Returned when a method succeeds
-		Fail //Returned when a method fails
+		Fail, //Returned when a method fails
+		DirDoesNotExist
 	}
 	public static Master master;
 	public static ChunkServer chunkserver1;
@@ -111,7 +112,8 @@ public class ClientFS {
 	 * Example usage: OpenFile("/Shahram/CSCI485/Lecture1/Intro.pptx")
 	 */
 	public FSReturnVals OpenFile(String FilePath, FileHandle ofh) {
-		return null;
+		return master.OpenFile(FilePath, ofh);
+		//return null;
 	}
 
 	/**
@@ -120,7 +122,8 @@ public class ClientFS {
 	 * Example usage: CloseFile(FH1)
 	 */
 	public FSReturnVals CloseFile(FileHandle ofh) {
-		return null;
+		return master.CloseFile(ofh);
+		//return null;
 	}
 
 }

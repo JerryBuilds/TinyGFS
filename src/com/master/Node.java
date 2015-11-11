@@ -20,6 +20,10 @@ public class Node {
 		return data;
 	}
 	
+	public Node GetParent() {
+		return parent;
+	}
+	
 	public void SetData(Location nodeData) {
 		data = nodeData;
 	}
