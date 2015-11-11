@@ -166,11 +166,73 @@ public class Master {
 	}
 	
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		return null;
+		Node parentNode = namespace.root;
+		
+		ArrayList<String> path = ParsePath(tgtdir);
+		
+		// if the first directory is not root, returns error
+		if (!path.get(0).equals("/")) {
+			return FSReturnVals.SrcDirNotExistent;
+		}
+		
+		File newFile = new File();
+		newFile.name = filename;
+		
+		// find the proper parent node
+		// if the path is invalid, returns error
+		String currentdir;
+		for (int i=1; i < path.size(); i++) {
+			currentdir = path.get(i).substring(0, path.get(i).length()-1);
+			parentNode = parentNode.GetChild(currentdir);
+			if (parentNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+		}
+		
+		// checks if directory already exists
+		// if so, then return error
+		currentdir = filename;
+		if (parentNode.GetChild(currentdir) != null) {
+			return FSReturnVals.DestDirExists;
+		}
+		
+		// add the new directory
+		parentNode.AddChild(newFile);
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		return null;
+		Node parentNode = namespace.root;
+		
+		ArrayList<String> path = ParsePath(tgtdir);
+		
+		// if the first directory is not root, returns error
+		if (!path.get(0).equals("/")) {
+			return FSReturnVals.SrcDirNotExistent;
+		}
+		
+		// find the proper parent node
+		// if the path is invalid, returns error
+		String currentdir;
+		for (int i=1; i < path.size(); i++) {
+			currentdir = path.get(i).substring(0, path.get(i).length()-1);
+			parentNode = parentNode.GetChild(currentdir);
+			if (parentNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+		}
+		
+		// if directory is not empty, CANNOT DELETE!!
+		ArrayList<Node> children = parentNode.GetChild(filename).GetChildren();
+		if (!children.isEmpty()) {
+			return FSReturnVals.DirNotEmpty;
+		}
+		
+		// remove the directory
+		parentNode.RemoveChild(filename);
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals OpenFile(String FilePath, FileHandle ofh) {

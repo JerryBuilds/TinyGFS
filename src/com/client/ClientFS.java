@@ -94,7 +94,8 @@ public class ClientFS {
 	 * Example usage: DeleteFile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		return null;
+		return ms.DeleteFile(tgtdir, filename);
+		//return null;
 	}
 
 	/**
