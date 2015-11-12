@@ -58,6 +58,7 @@ public class Node {
 	// traverses all parents and appends all strings to
 	// return the full path
 	public String GetFullPath() {
+		//if the node is the root node
 		if (data.name.equals("")) {
 			return "";
 		}
