@@ -25,7 +25,7 @@ import com.interfaces.ChunkServerInterface;
 public class ChunkServer implements ChunkServerInterface {
 	final static String filePath = "csci485/";	//or C:\\newfile.txt
 	public final static String ClientConfigFile = "ClientConfig.txt";
-	public final static int ChunkSize = 4 * 1024; //1024 KB chunk sizes
+	public final static int ChunkSize = 1024 * 1024; //1024 KB chunk sizes
 	
 	//Used for the file system
 	public static long counter;

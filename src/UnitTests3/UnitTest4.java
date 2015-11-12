@@ -106,6 +106,7 @@ public class UnitTest4 {
 				System.out.println("Unit test 4 result: fail!  Found an even numbered record with value " + value + ".");
 	    		return;
 			}
+			r1 = r2;
 			RID1 = RID2;
 		}
 		fsrv = cfs.CloseFile(fh);

@@ -53,7 +53,11 @@ public class ClientRec {
 		}
 		
 		// read from ChunkServer
-		ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = new byte[RecordID.size];
+		temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		for (int i=0; i < RecordID.size; i++) {
+			payload[i] = temp[i];
+		}
 		
 		return FSReturnVals.Success;
 	}
@@ -73,7 +77,11 @@ public class ClientRec {
 		}
 		
 		// read from ChunkServer
-		ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = new byte[RecordID.size];
+		temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		for (int i=0; i < RecordID.size; i++) {
+			payload[i] = temp[i];
+		}
 		
 		return FSReturnVals.Success;
 	}
@@ -94,7 +102,11 @@ public class ClientRec {
 		}
 		
 		// read from ChunkServer
-		ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = new byte[RecordID.size];
+		temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		for (int i=0; i < RecordID.size; i++) {
+			payload[i] = temp[i];
+		}
 		
 		return FSReturnVals.Success;
 	}
@@ -115,7 +127,11 @@ public class ClientRec {
 		}
 		
 		// read from ChunkServer
-		ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = new byte[RecordID.size];
+		temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		for (int i=0; i < RecordID.size; i++) {
+			payload[i] = temp[i];
+		}
 		
 		return FSReturnVals.Success;
 	}
