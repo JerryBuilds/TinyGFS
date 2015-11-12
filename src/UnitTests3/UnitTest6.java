@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import com.chunkserver.ChunkServer;
 import com.client.ClientFS;
 import com.client.ClientFS.FSReturnVals;
 import com.client.ClientRec;
@@ -107,7 +108,10 @@ public class UnitTest6 {
 		//Read the records and compare the payloads
 		imgofd = cfs.OpenFile("/" + dir1 + "/" + TinyFileName + ".img", ImageFH);
 		nameofd = cfs.OpenFile("/" + dir1 + "/" + TinyFileName + ".names", NameFH);
-		byte[] imagePL = null, namePL = null;
+//		byte[] imagePL = null, namePL = null;
+		byte[] imagePL = new byte[ChunkServer.ChunkSize];
+		byte[] namePL = new byte[ChunkServer.ChunkSize];
+//		
 		RID img1 = new RID();
 		FSReturnVals imgRID1 = crec.ReadFirstRecord(ImageFH, imagePL, img1);
 		RID name1 = new RID();
@@ -116,13 +120,20 @@ public class UnitTest6 {
 			System.out.println("Error in UnitTest6:  Failed to read the first record");
 			return;
 		}
+//		
+		RID img2 = new RID(), name2 = new RID();
+//		
 		for(int i = 0; i < SuperHeros.length; i++){
 			String filename = SuperHeros[i];  //This is the file in the local directory
 			if(i != 0){
-				RID img2 = new RID();
+//				RID img2 = new RID();
+				img2 = new RID();
+//				
 				FSReturnVals imgRID2 = crec.ReadNextRecord(ImageFH, img1, imagePL, img2);
 				img1 = img2;
-				RID name2 = new RID();
+//				RID name2 = new RID();
+				name2 = new RID();
+//				
 				FSReturnVals nameRID2 = crec.ReadNextRecord(NameFH, name1, namePL, name2);
 				name1 = name2;
 			}
@@ -130,7 +141,9 @@ public class UnitTest6 {
 			long size = 0;
 			byte[] contentBytes = getBytesFromFile(new File("SuperHeros/" + filename + ".jpg"), size);
 			byte[] sizeBytes = ByteBuffer.allocate(intSize).putInt((int)size).array();
-			for(int j = 0; j < imagePL.length; j++){
+//			for(int j = 0; j < imagePL.length; j++){
+			for(int j = 0; j < img2.size; j++){
+//				
 				if(j < 4){
 					if(imagePL[j] != indexBytes[j]){
 						System.out.println("Unit test 6 result: fail!");
@@ -152,7 +165,9 @@ public class UnitTest6 {
 			contentBytes = filename.getBytes();
 			size = sizeBytes.length;
 			sizeBytes = ByteBuffer.allocate(intSize).putInt(sizeBytes.length).array();
-			for(int j = 0; j < namePL.length; j++){
+//			for(int j = 0; j < namePL.length; j++){
+			for(int j = 0; j < name2.size; j++){
+//			
 				if(j < 4){
 					if(namePL[j] != indexBytes[j]){
 						System.out.println("Unit test 6 result: fail!");
