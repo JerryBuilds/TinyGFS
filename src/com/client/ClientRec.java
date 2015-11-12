@@ -35,7 +35,7 @@ public class ClientRec {
 	 * Example usage: DeleteRecord(FH1, RecID1)
 	 */
 	public FSReturnVals DeleteRecord(FileHandle ofh, RID RecordID) {
-		return null;
+		return ClientFS.master.DeleteRecord(ofh, RecordID);
 	}
 
 	/**

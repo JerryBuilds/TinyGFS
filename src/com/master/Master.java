@@ -7,6 +7,7 @@ import com.master.Node;
 import com.client.ClientFS.FSReturnVals;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 public class Master {
@@ -157,8 +158,6 @@ public class Master {
 		}
 		
 		ofh.FilePath = FilePath;
-		ofh.RIDs = null;
-		ofh.ChunkIndex = -1;
 		ofh.ChunkServerID = -1;
 		
 		return FSReturnVals.Success;
@@ -173,8 +172,6 @@ public class Master {
 		
 		// set all parameters of FileHandle to null
 		ofh.FilePath = null;
-		ofh.RIDs = null;
-		ofh.ChunkIndex = -1;
 		ofh.ChunkServerID = -1;
 		
 		return FSReturnVals.Success;
@@ -196,95 +193,70 @@ public class Master {
 		// get file metadata
 		File fmd = (File) tempNode.GetData();
 		
+		
 		// Case 1: File has never been written to, or is empty
-		if (fmd.cs1info == null) {
-			
-			// instantiate
-			fmd.cs1info = new ArrayList<ArrayList<RID>>();
-			
-			// create new chunk
-			ArrayList<RID> chunkinfo = new ArrayList<RID>();
+		if (fmd.cs1info.isEmpty()) {
 			
 			// create new RID
-			RID rid = new RID();
-			rid.chunkhandle = ClientFS.chunkserver1.createChunk();
-			rid.byteoffset = 0;
-			rid.size = size;
-			rid.index = 0;
+			RID newRid = new RID();
+			newRid.chunkhandle = ClientFS.chunkserver1.createChunk();
+			newRid.byteoffset = 0;
+			newRid.size = size;
 			
-			// update file metatdata
-			chunkinfo.add(rid);
-			fmd.cs1info.add(chunkinfo);
+			// update metadata
+			fmd.cs1info.add(newRid);
 			
 			// update FH and RID
-			ofh.RIDs = chunkinfo;
-			ofh.ChunkIndex = 0;
 			ofh.ChunkServerID = 1; // to be changed later
-			RecordID.chunkhandle = rid.chunkhandle;
-			RecordID.byteoffset = rid.byteoffset;
-			RecordID.size = rid.size;
-			RecordID.index = rid.index;
+			RecordID.chunkhandle = newRid.chunkhandle;
+			RecordID.byteoffset = newRid.byteoffset;
+			RecordID.size = size;
 			
 		}
 		
 		// Case 2: File has been written to, or is not empty
 		else {
 			
-			// find amount of space left
-			int spaceleft = -1;
-			ArrayList<RID> chunkinfo = fmd.cs1info.get(fmd.cs1info.size()-1);
-			RID rid = chunkinfo.get(chunkinfo.size()-1);
-			spaceleft = ClientFS.chunkserver1.ChunkSize - rid.byteoffset - rid.size;
+			// calculate space left in current chunk
+			RID tailRid = fmd.cs1info.getLast();
+			int spaceleft = ClientFS.chunkserver1.ChunkSize - tailRid.byteoffset - tailRid.size;
 			
-			RecordID.index = rid.index + 1;
-			
+
 			// Case 2a: Chunk does not have enough room (must create new chunk)
 			if (size > spaceleft) {
 				
-				// create new chunk
-				chunkinfo = new ArrayList<RID>();
-				
 				// create new RID
-				rid = new RID();
-				rid.chunkhandle = ClientFS.chunkserver1.createChunk();
-				rid.byteoffset = 0;
-				rid.size = size;
-				rid.index = 0;
+				RID newRid = new RID();
+				newRid.chunkhandle = ClientFS.chunkserver1.createChunk();
+				newRid.byteoffset = 0;
+				newRid.size = size;
 				
 				// update metadata
-				chunkinfo.add(rid);
-				fmd.cs1info.add(chunkinfo);
+				fmd.cs1info.add(newRid);
 				
-				// update ChunkIndex
-				ofh.ChunkIndex++;
-				ofh.RIDs = chunkinfo;
+				// update FH and RID
 				ofh.ChunkServerID = 1; // to be changed later
-				
-				// update RID
-				RecordID.chunkhandle = rid.chunkhandle;
-				RecordID.byteoffset = 0;
-				RecordID.size = rid.size;
-				RecordID.index = rid.index;
+				RecordID.chunkhandle = newRid.chunkhandle;
+				RecordID.byteoffset = newRid.byteoffset;
+				RecordID.size = size;
 				
 			}
-			// Case 2b: Chunk does have enough room
 			else {
+				
 				// create new RID
-				RID rid2 = new RID();
-				rid2.chunkhandle = rid.chunkhandle;
-				rid2.byteoffset = rid.byteoffset + rid.size;
-				rid2.size = size;
-				rid2.index = rid.index + 1;
+				RID newRid = new RID();
+				newRid.chunkhandle = tailRid.chunkhandle;
+				newRid.byteoffset = tailRid.byteoffset + tailRid.size;
+				newRid.size = size;
 				
 				// update metadata
-				chunkinfo.add(rid2);
+				fmd.cs1info.add(newRid);
 				
-				// update RID
-				RecordID.chunkhandle = rid.chunkhandle;
-				RecordID.byteoffset = rid.byteoffset + rid.size;
-				RecordID.size = rid.size;
-				RecordID.index = rid.index;
-				
+				// update FH and RID
+				ofh.ChunkServerID = 1; // to be changed later
+				RecordID.chunkhandle = newRid.chunkhandle;
+				RecordID.byteoffset = newRid.byteoffset;
+				RecordID.size = size;
 			}
 			
 		}
@@ -293,6 +265,7 @@ public class Master {
 	}
 	
 	public FSReturnVals DeleteRecord(FileHandle ofh, RID RecordID) {
+		
 		return null;
 	}
 	
@@ -307,22 +280,18 @@ public class Master {
 		File fmd = (File) tempNode.GetData();
 		
 		// if file is empty, return error
-		if (fmd.cs1info == null) {
+		if (fmd.cs1info.isEmpty()) {
 			return FSReturnVals.RecDoesNotExist;
 		}
 		
 		// get first record from first chunk
-		ArrayList<RID> chunkinfo = fmd.cs1info.get(0);
-		RID rid = chunkinfo.get(0);
+		RID firstRid = fmd.cs1info.peek();
 		
 		// update FH and RID
-		ofh.RIDs = chunkinfo;
-		ofh.ChunkIndex = 0;
 		ofh.ChunkServerID = 1; // to be changed later
-		RecordID.chunkhandle = rid.chunkhandle;
-		RecordID.byteoffset = rid.byteoffset;
-		RecordID.size = rid.size;
-		RecordID.index = 0;
+		RecordID.chunkhandle = firstRid.chunkhandle;
+		RecordID.byteoffset = firstRid.byteoffset;
+		RecordID.size = firstRid.size;
 		
 
 		return FSReturnVals.Success;
@@ -347,33 +316,39 @@ public class Master {
 			return FSReturnVals.RecDoesNotExist;
 		}
 		
-		// get next record
+		// check if this record is the last one
+		RID lastRid = fmd.cs1info.getLast();
+		if (pivot.equals(lastRid)) {
+			RecordID = null;
+			return FSReturnVals.RecDoesNotExist;
+		}
 		
-		// Case 1: not last record in chunk
-		if (pivot.index < ofh.RIDs.size()-1) {
-			RecordID.chunkhandle = ofh.RIDs.get(pivot.index+1).chunkhandle;
-			RecordID.byteoffset = ofh.RIDs.get(pivot.index+1).byteoffset;
-			RecordID.size = ofh.RIDs.get(pivot.index+1).size;
-			RecordID.index = ofh.RIDs.get(pivot.index+1).index;
-		}
-		// Case 2: last record in chunk
-		else {
-			// Case 2a: not last chunk in file
-			if (ofh.ChunkIndex < fmd.cs1info.size()-1) {
-				ofh.RIDs = fmd.cs1info.get(++ofh.ChunkIndex);
-				RecordID.chunkhandle = ofh.RIDs.get(0).chunkhandle;
-				RecordID.byteoffset = ofh.RIDs.get(0).byteoffset;
-				RecordID.size = ofh.RIDs.get(0).size;
-				RecordID.index = ofh.RIDs.get(0).index;
-			}
-			// Case 2b: last chunk in file
-			else {
-				RecordID = null;
-				return FSReturnVals.FileDoesNotExist;
-			}
-		}
+		// get next record
+		int pivIndex = IndexOf(fmd.cs1info, pivot);
+		RID nextRid = fmd.cs1info.get(pivIndex+1);
+		
+		// update FH and RID
+		ofh.ChunkServerID = 1; // to be changed later
+		RecordID.chunkhandle = nextRid.chunkhandle;
+		RecordID.byteoffset = nextRid.byteoffset;
+		RecordID.size = nextRid.size;
+		
 		
 		return FSReturnVals.Success;
+	}
+	
+	int IndexOf(LinkedList<RID> myll, RID myrid) {
+		int index = -1;
+		RID tempRid;
+		for (int i=0; i < myll.size(); i++) {
+			tempRid = myll.get(i);
+			if (tempRid.byteoffset == myrid.byteoffset
+					&& tempRid.chunkhandle.equals(myrid.chunkhandle)
+					&& tempRid.size == myrid.size) {
+				return i;
+			}
+		}
+		return index;
 	}
 	
 	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
