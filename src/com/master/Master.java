@@ -265,8 +265,33 @@ public class Master {
 	}
 	
 	public FSReturnVals DeleteRecord(FileHandle ofh, RID RecordID) {
+		// if invalid filepath, return error
+		Node tempNode = GetNode(ofh.FilePath);
+		if (tempNode == null) {
+			return FSReturnVals.FileDoesNotExist;
+		}
 		
-		return null;
+		// get file metadata
+		File fmd = (File) tempNode.GetData();
+		
+		// if file is empty, return error
+		if (fmd.cs1info.isEmpty()) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// find index
+		int removeIndex = IndexOf(fmd.cs1info, RecordID);
+		
+		// if this record does not exist, return error
+		if (removeIndex == -1) {
+			return FSReturnVals.Fail;
+		}
+		
+		// remove this index
+		fmd.cs1info.remove(removeIndex);
+		
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals ReadFirstRecord(FileHandle ofh, RID RecordID) {
@@ -320,7 +345,7 @@ public class Master {
 		RID lastRid = fmd.cs1info.getLast();
 		if (pivot.equals(lastRid)) {
 			RecordID = null;
-			return FSReturnVals.RecDoesNotExist;
+			return FSReturnVals.Fail;
 		}
 		
 		// get next record

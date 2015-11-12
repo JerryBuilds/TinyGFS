@@ -68,7 +68,7 @@ public class UnitTest4 {
 			        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
 			
 			//Store r2 in a vector
-			if(value % 2 != 0){
+			if(value % 2 != 0 && RID2 == FSReturnVals.Success){
 				vect.add(r2);
 			}
 			r1 = r2;
@@ -102,7 +102,7 @@ public class UnitTest4 {
 			System.arraycopy(payload, 0, head, 0, 4);
 			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
 			        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
-			if(value % 2 != 0){
+			if(value % 2 != 0 && RID2 == FSReturnVals.Success){
 				System.out.println("Unit test 4 result: fail!  Found an even numbered record with value " + value + ".");
 	    		return;
 			}
