@@ -56,11 +56,12 @@ public class UnitTest4 {
 		ofd = cfs.OpenFile("/" + dir1 + "/emp", fh);
 		RID r1 = new RID();
 		FSReturnVals RID1 = crec.ReadFirstRecord(fh, payload, r1);
-		int cntr = 1;
+		int cntr = 0;
 		ArrayList<RID> vect = new ArrayList<RID>();
-		while (r1 != null){
+		FSReturnVals RID2 = FSReturnVals.Success;
+		while (RID2 == FSReturnVals.Success){
 			RID r2 = new RID();
-			FSReturnVals RID2 = crec.ReadNextRecord(fh, r1, payload, r2);
+			RID2 = crec.ReadNextRecord(fh, r1, payload, r2);
 			byte[] head = new byte[4];
 			System.arraycopy(payload, 0, head, 0, 4);
 			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
@@ -96,7 +97,7 @@ public class UnitTest4 {
 		RID1 = crec.ReadFirstRecord(fh, payload, r1);
 		while (RID1 != FSReturnVals.Fail){
 			RID r2 = new RID();
-			FSReturnVals RID2 = crec.ReadNextRecord(fh, r1, payload, r2);
+			RID2 = crec.ReadNextRecord(fh, r1, payload, r2);
 			byte[] head = new byte[4];
 			System.arraycopy(payload, 0, head, 0, 4);
 			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)

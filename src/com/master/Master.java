@@ -158,6 +158,7 @@ public class Master {
 		
 		ofh.FilePath = FilePath;
 		ofh.RIDs = null;
+		ofh.ChunkIndex = -1;
 		ofh.ChunkServerID = -1;
 		
 		return FSReturnVals.Success;
@@ -173,6 +174,7 @@ public class Master {
 		// set all parameters of FileHandle to null
 		ofh.FilePath = null;
 		ofh.RIDs = null;
+		ofh.ChunkIndex = -1;
 		ofh.ChunkServerID = -1;
 		
 		return FSReturnVals.Success;
@@ -189,11 +191,6 @@ public class Master {
 		Node tempNode = GetNode(ofh.FilePath);
 		if (tempNode == null) {
 			return FSReturnVals.FileDoesNotExist;
-		}
-		
-		// if RID is not null, returns error
-		if (RecordID != null) {
-			return FSReturnVals.BadRecID;
 		}
 		
 		// get file metadata
@@ -213,6 +210,7 @@ public class Master {
 			rid.chunkhandle = ClientFS.chunkserver1.createChunk();
 			rid.byteoffset = 0;
 			rid.size = size;
+			rid.index = 0;
 			
 			// update file metatdata
 			chunkinfo.add(rid);
@@ -220,8 +218,12 @@ public class Master {
 			
 			// update FH and RID
 			ofh.RIDs = chunkinfo;
+			ofh.ChunkIndex = 0;
 			ofh.ChunkServerID = 1; // to be changed later
-			RecordID = rid;
+			RecordID.chunkhandle = rid.chunkhandle;
+			RecordID.byteoffset = rid.byteoffset;
+			RecordID.size = rid.size;
+			RecordID.index = rid.index;
 			
 		}
 		
@@ -234,6 +236,8 @@ public class Master {
 			RID rid = chunkinfo.get(chunkinfo.size()-1);
 			spaceleft = ClientFS.chunkserver1.ChunkSize - rid.byteoffset - rid.size;
 			
+			RecordID.index = rid.index + 1;
+			
 			// Case 2a: Chunk does not have enough room (must create new chunk)
 			if (size > spaceleft) {
 				
@@ -245,21 +249,43 @@ public class Master {
 				rid.chunkhandle = ClientFS.chunkserver1.createChunk();
 				rid.byteoffset = 0;
 				rid.size = size;
+				rid.index = 0;
 				
 				// update metadata
 				chunkinfo.add(rid);
 				fmd.cs1info.add(chunkinfo);
+				
+				// update ChunkIndex
+				ofh.ChunkIndex++;
+				ofh.RIDs = chunkinfo;
+				ofh.ChunkServerID = 1; // to be changed later
+				
+				// update RID
+				RecordID.chunkhandle = rid.chunkhandle;
+				RecordID.byteoffset = 0;
+				RecordID.size = rid.size;
+				RecordID.index = rid.index;
+				
 			}
-
-			// update FH
-			ofh.RIDs = chunkinfo;
-			ofh.ChunkServerID = 1; // to be changed later
-			
-			// update RID
-			RecordID = new RID();
-			RecordID.chunkhandle = rid.chunkhandle;
-			RecordID.byteoffset = rid.byteoffset + rid.size;
-			RecordID.size = size;
+			// Case 2b: Chunk does have enough room
+			else {
+				// create new RID
+				RID rid2 = new RID();
+				rid2.chunkhandle = rid.chunkhandle;
+				rid2.byteoffset = rid.byteoffset + rid.size;
+				rid2.size = size;
+				rid2.index = rid.index + 1;
+				
+				// update metadata
+				chunkinfo.add(rid2);
+				
+				// update RID
+				RecordID.chunkhandle = rid.chunkhandle;
+				RecordID.byteoffset = rid.byteoffset + rid.size;
+				RecordID.size = rid.size;
+				RecordID.index = rid.index;
+				
+			}
 			
 		}
 		
@@ -277,11 +303,6 @@ public class Master {
 			return FSReturnVals.FileDoesNotExist;
 		}
 		
-		// if RID is not null, returns error
-		if (RecordID != null) {
-			return FSReturnVals.BadRecID;
-		}
-		
 		// get file metadata
 		File fmd = (File) tempNode.GetData();
 		
@@ -296,10 +317,14 @@ public class Master {
 		
 		// update FH and RID
 		ofh.RIDs = chunkinfo;
+		ofh.ChunkIndex = 0;
 		ofh.ChunkServerID = 1; // to be changed later
-		RecordID = rid;
+		RecordID.chunkhandle = rid.chunkhandle;
+		RecordID.byteoffset = rid.byteoffset;
+		RecordID.size = rid.size;
+		RecordID.index = 0;
 		
-		
+
 		return FSReturnVals.Success;
 	}
 	
@@ -307,8 +332,48 @@ public class Master {
 		return null;
 	}
 	
-	public FSReturnVals ReadNextRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
-		return null;
+	public FSReturnVals ReadNextRecord(FileHandle ofh, RID pivot, RID RecordID) {// if invalid filepath, return error
+		// if invalid filepath, return error
+		Node tempNode = GetNode(ofh.FilePath);
+		if (tempNode == null) {
+			return FSReturnVals.FileDoesNotExist;
+		}
+		
+		// get file metadata
+		File fmd = (File) tempNode.GetData();
+		
+		// if file is empty, return error
+		if (fmd.cs1info == null) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// get next record
+		
+		// Case 1: not last record in chunk
+		if (pivot.index < ofh.RIDs.size()-1) {
+			RecordID.chunkhandle = ofh.RIDs.get(pivot.index+1).chunkhandle;
+			RecordID.byteoffset = ofh.RIDs.get(pivot.index+1).byteoffset;
+			RecordID.size = ofh.RIDs.get(pivot.index+1).size;
+			RecordID.index = ofh.RIDs.get(pivot.index+1).index;
+		}
+		// Case 2: last record in chunk
+		else {
+			// Case 2a: not last chunk in file
+			if (ofh.ChunkIndex < fmd.cs1info.size()-1) {
+				ofh.RIDs = fmd.cs1info.get(++ofh.ChunkIndex);
+				RecordID.chunkhandle = ofh.RIDs.get(0).chunkhandle;
+				RecordID.byteoffset = ofh.RIDs.get(0).byteoffset;
+				RecordID.size = ofh.RIDs.get(0).size;
+				RecordID.index = ofh.RIDs.get(0).index;
+			}
+			// Case 2b: last chunk in file
+			else {
+				RecordID = null;
+				return FSReturnVals.FileDoesNotExist;
+			}
+		}
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {

@@ -77,7 +77,16 @@ public class ClientRec {
 	 * rec1, rec, rec2) 3. ReadNextRecord(FH1, rec2, rec, rec3)
 	 */
 	public FSReturnVals ReadNextRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
-		return null;
+		// request info from master
+		FSReturnVals retval = ClientFS.master.ReadNextRecord(ofh, pivot, RecordID);
+		if (retval != FSReturnVals.Success) {
+			return retval;
+		}
+		
+		// read from ChunkServer
+		ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		
+		return FSReturnVals.Success;
 	}
 
 	/**
