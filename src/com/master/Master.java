@@ -270,8 +270,37 @@ public class Master {
 		return null;
 	}
 	
-	public FSReturnVals ReadFirstRecord(FileHandle ofh, byte[] payload, RID RecordID) {
-		return null;
+	public FSReturnVals ReadFirstRecord(FileHandle ofh, RID RecordID) {
+		// if invalid filepath, return error
+		Node tempNode = GetNode(ofh.FilePath);
+		if (tempNode == null) {
+			return FSReturnVals.FileDoesNotExist;
+		}
+		
+		// if RID is not null, returns error
+		if (RecordID != null) {
+			return FSReturnVals.BadRecID;
+		}
+		
+		// get file metadata
+		File fmd = (File) tempNode.GetData();
+		
+		// if file is empty, return error
+		if (fmd.cs1info == null) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// get first record from first chunk
+		ArrayList<RID> chunkinfo = fmd.cs1info.get(0);
+		RID rid = chunkinfo.get(0);
+		
+		// update FH and RID
+		ofh.RIDs = chunkinfo;
+		ofh.ChunkServerID = 1; // to be changed later
+		RecordID = rid;
+		
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals ReadLastRecord(FileHandle ofh, byte[] payload, RID RecordID) {

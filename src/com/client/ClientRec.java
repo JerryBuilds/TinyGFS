@@ -45,7 +45,17 @@ public class ClientRec {
 	 * Example usage: ReadFirstRecord(FH1, rec, recid)
 	 */
 	public FSReturnVals ReadFirstRecord(FileHandle ofh, byte[] payload, RID RecordID) {
-		return null;
+		
+		// request info from master
+		FSReturnVals retval = ClientFS.master.ReadFirstRecord(ofh, RecordID);
+		if (retval != FSReturnVals.Success) {
+			return retval;
+		}
+		
+		// read from ChunkServer
+		ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		
+		return FSReturnVals.Success;
 	}
 
 	/**
