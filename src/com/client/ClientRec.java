@@ -14,9 +14,16 @@ public class ClientRec {
 	 */
 	public FSReturnVals AppendRecord(FileHandle ofh, byte[] payload, RID RecordID) {
 		
-		ClientFS.master.AppendRecord(ofh, RecordID);
+		// request info from master
+		FSReturnVals retval = ClientFS.master.AppendRecord(ofh, RecordID, payload.length);
+		if (retval != FSReturnVals.Success) {
+			return retval;
+		}
 		
-		return null;
+		// write to chunkserver
+		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
+		
+		return FSReturnVals.Success;
 	}
 
 	/**

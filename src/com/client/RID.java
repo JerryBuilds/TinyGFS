@@ -1,7 +1,7 @@
 package com.client;
 
 public class RID {
-	String chunkhandle;
-	int byteoffset;
-	int size;
+	public String chunkhandle;
+	public int byteoffset;
+	public int size;
 }

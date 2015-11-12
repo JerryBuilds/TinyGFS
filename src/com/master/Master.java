@@ -1,5 +1,6 @@
 package com.master;
 
+import com.client.ClientFS;
 import com.client.FileHandle;
 import com.client.RID;
 import com.master.Node;
@@ -166,7 +167,7 @@ public class Master {
 		// if invalid filepath, return error
 		Node tempNode = GetNode(ofh.FilePath);
 		if (tempNode == null) {
-			return FSReturnVals.FileDoesNotExist;
+			return FSReturnVals.BadHandle;
 		}
 		
 		// set all parameters of FileHandle to null
@@ -177,12 +178,92 @@ public class Master {
 		return FSReturnVals.Success;
 	}
 	
-	public FSReturnVals AppendRecord(FileHandle ofh, RID RecordID) {
-		// if invalid handle, return error
+	public FSReturnVals AppendRecord(FileHandle ofh, RID RecordID, int size) {
+		// cannot write a record that is bigger than chunk's size
+		if (size > ClientFS.chunkserver1.ChunkSize) {
+			System.out.println("Record is larger than chunk size. Cannot AppendRecord.");
+			return FSReturnVals.Fail;
+		}
 		
+		// if invalid filepath, return error
+		Node tempNode = GetNode(ofh.FilePath);
+		if (tempNode == null) {
+			return FSReturnVals.FileDoesNotExist;
+		}
 		
+		// if RID is not null, returns error
+		if (RecordID != null) {
+			return FSReturnVals.BadRecID;
+		}
 		
-		return null;
+		// get file metadata
+		File fmd = (File) tempNode.GetData();
+		
+		// Case 1: File has never been written to, or is empty
+		if (fmd.cs1info == null) {
+			
+			// instantiate
+			fmd.cs1info = new ArrayList<ArrayList<RID>>();
+			
+			// create new chunk
+			ArrayList<RID> chunkinfo = new ArrayList<RID>();
+			
+			// create new RID
+			RID rid = new RID();
+			rid.chunkhandle = ClientFS.chunkserver1.createChunk();
+			rid.byteoffset = 0;
+			rid.size = size;
+			
+			// update file metatdata
+			chunkinfo.add(rid);
+			fmd.cs1info.add(chunkinfo);
+			
+			// update FH and RID
+			ofh.RIDs = chunkinfo;
+			ofh.ChunkServerID = 1; // to be changed later
+			RecordID = rid;
+			
+		}
+		
+		// Case 2: File has been written to, or is not empty
+		else {
+			
+			// find amount of space left
+			int spaceleft = -1;
+			ArrayList<RID> chunkinfo = fmd.cs1info.get(fmd.cs1info.size()-1);
+			RID rid = chunkinfo.get(chunkinfo.size()-1);
+			spaceleft = ClientFS.chunkserver1.ChunkSize - rid.byteoffset - rid.size;
+			
+			// Case 2a: Chunk does not have enough room (must create new chunk)
+			if (size > spaceleft) {
+				
+				// create new chunk
+				chunkinfo = new ArrayList<RID>();
+				
+				// create new RID
+				rid = new RID();
+				rid.chunkhandle = ClientFS.chunkserver1.createChunk();
+				rid.byteoffset = 0;
+				rid.size = size;
+				
+				// update metadata
+				chunkinfo.add(rid);
+				fmd.cs1info.add(chunkinfo);
+			}
+
+			// update FH
+			ofh.RIDs = chunkinfo;
+			ofh.ChunkServerID = 1; // to be changed later
+			
+			// update RID
+			RecordID = new RID();
+			RecordID.chunkhandle = rid.chunkhandle;
+			RecordID.byteoffset = rid.byteoffset + rid.size;
+			RecordID.size = size;
+			
+		}
+		
+		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals DeleteRecord(FileHandle ofh, RID RecordID) {
@@ -301,7 +382,8 @@ public class Master {
 		return directories;
 	}
 	
-	// check filepath validity
+	// returns a node
+	// or null if that node doesn't exist
 	private Node GetNode(String filepath) {
 		Node currentNode = namespace.root;
 		
