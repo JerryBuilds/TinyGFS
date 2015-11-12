@@ -57,14 +57,15 @@ public class UnitTest5 {
 		FSReturnVals RID1 = crec.ReadLastRecord(fh, payload, r1);
 		int cntr = 0;
 		ArrayList<RID> vect = new ArrayList<RID>();
-		while (r1 != null){
+		FSReturnVals RID2 = FSReturnVals.Success;
+		while (RID2 == FSReturnVals.Success){
 			RID r2 = new RID();
-			FSReturnVals RID2 = crec.ReadPrevRecord(fh, r1, payload, r2);
+			RID2 = crec.ReadPrevRecord(fh, r1, payload, r2);
 			byte[] head = new byte[4];
 			System.arraycopy(payload, 0, head, 0, 4);
 			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
 			        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
-			if(value % 2 == 0){
+			if(value % 2 != 0 && RID2 == FSReturnVals.Success){
 				vect.add(r2);
 			}
 			r1 = r2;
@@ -88,18 +89,18 @@ public class UnitTest5 {
 		ofd = cfs.OpenFile("/" + dir1 + "/emp1", fh);
 		r1 = new RID();
 		RID1 = crec.ReadLastRecord(fh, payload, r1);
-		while (r1 != null){
+		while (RID1 != FSReturnVals.Fail){
 			RID r2 = new RID();
-			FSReturnVals RID2 = crec.ReadPrevRecord(fh, r1, payload, r2);
+			RID2 = crec.ReadPrevRecord(fh, r1, payload, r2);
 			byte[] head = new byte[4];
 			System.arraycopy(payload, 0, head, 0, 4);
 			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
 			        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
-			if(value % 2 == 0){
+			if(value % 2 != 0 && RID2 == FSReturnVals.Success){
 				System.out.println("Unit test 5 result: fail!  Found an even numbered record with value " + value + ".");
 	    		return;
 			}
-			r1 = r2;
+			RID1 = RID2;
 		}
 		fsrv = cfs.CloseFile(fh);
 		System.out.println(TestName + "Success!");

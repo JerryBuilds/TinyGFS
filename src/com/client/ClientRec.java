@@ -65,7 +65,17 @@ public class ClientRec {
 	 * Example usage: ReadLastRecord(FH1, rec, recid)
 	 */
 	public FSReturnVals ReadLastRecord(FileHandle ofh, byte[] payload, RID RecordID) {
-		return null;
+		
+		// request info from master
+		FSReturnVals retval = ClientFS.master.ReadLastRecord(ofh, RecordID);
+		if (retval != FSReturnVals.Success) {
+			return retval;
+		}
+		
+		// read from ChunkServer
+		ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		
+		return FSReturnVals.Success;
 	}
 
 	/**
@@ -98,7 +108,16 @@ public class ClientRec {
 	 * recn-1, rec, rec2) 3. ReadPrevRecord(FH1, recn-2, rec, rec3)
 	 */
 	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
-		return null;
+		// request info from master
+		FSReturnVals retval = ClientFS.master.ReadPrevRecord(ofh, pivot, RecordID);
+		if (retval != FSReturnVals.Success) {
+			return retval;
+		}
+		
+		// read from ChunkServer
+		ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		
+		return FSReturnVals.Success;
 	}
 
 }

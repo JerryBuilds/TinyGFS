@@ -310,7 +310,7 @@ public class Master {
 		}
 		
 		// get first record from first chunk
-		RID firstRid = fmd.cs1info.peek();
+		RID firstRid = fmd.cs1info.peekFirst();
 		
 		// update FH and RID
 		ofh.ChunkServerID = 1; // to be changed later
@@ -322,11 +322,35 @@ public class Master {
 		return FSReturnVals.Success;
 	}
 	
-	public FSReturnVals ReadLastRecord(FileHandle ofh, byte[] payload, RID RecordID) {
-		return null;
+	public FSReturnVals ReadLastRecord(FileHandle ofh, RID RecordID) {
+		// if invalid filepath, return error
+		Node tempNode = GetNode(ofh.FilePath);
+		if (tempNode == null) {
+			return FSReturnVals.FileDoesNotExist;
+		}
+		
+		// get file metadata
+		File fmd = (File) tempNode.GetData();
+		
+		// if file is empty, return error
+		if (fmd.cs1info.isEmpty()) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// get first record from first chunk
+		RID lastRid = fmd.cs1info.peekLast();
+		
+		// update FH and RID
+		ofh.ChunkServerID = 1; // to be changed later
+		RecordID.chunkhandle = lastRid.chunkhandle;
+		RecordID.byteoffset = lastRid.byteoffset;
+		RecordID.size = lastRid.size;
+		
+
+		return FSReturnVals.Success;
 	}
 	
-	public FSReturnVals ReadNextRecord(FileHandle ofh, RID pivot, RID RecordID) {// if invalid filepath, return error
+	public FSReturnVals ReadNextRecord(FileHandle ofh, RID pivot, RID RecordID) {
 		// if invalid filepath, return error
 		Node tempNode = GetNode(ofh.FilePath);
 		if (tempNode == null) {
@@ -376,8 +400,40 @@ public class Master {
 		return index;
 	}
 	
-	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
-		return null;
+	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, RID RecordID) {
+		// if invalid filepath, return error
+		Node tempNode = GetNode(ofh.FilePath);
+		if (tempNode == null) {
+			return FSReturnVals.FileDoesNotExist;
+		}
+		
+		// get file metadata
+		File fmd = (File) tempNode.GetData();
+		
+		// if file is empty, return error
+		if (fmd.cs1info == null) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// check if this record is the last one
+		RID firstRid = fmd.cs1info.peekFirst();
+		if (pivot.equals(firstRid)) {
+			RecordID = null;
+			return FSReturnVals.Fail;
+		}
+		
+		// get next record
+		int pivIndex = IndexOf(fmd.cs1info, pivot);
+		RID nextRid = fmd.cs1info.get(pivIndex-1);
+		
+		// update FH and RID
+		ofh.ChunkServerID = 1; // to be changed later
+		RecordID.chunkhandle = nextRid.chunkhandle;
+		RecordID.byteoffset = nextRid.byteoffset;
+		RecordID.size = nextRid.size;
+		
+		
+		return FSReturnVals.Success;
 	}
 	
 	
