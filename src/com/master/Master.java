@@ -666,7 +666,7 @@ public class Master {
 		
 		String src, dirname, NewName, tgtdir, filename, FilePath;
 		FileHandle ofh;
-		RID RecordID;
+		RID RecordID, pivot;
 		int size;
 		ClientFS.FSReturnVals retval;
 		String converted;
@@ -830,6 +830,113 @@ public class Master {
 						
 						// execute on master
 						retval = this.AppendRecord(ofh, RecordID, size);
+						
+						// return to client
+						WriteOutput.writeObject(ofh);
+						WriteOutput.flush();
+						WriteOutput.writeObject(RecordID);
+						WriteOutput.flush();
+						
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						
+						break;
+						
+					case DeleteRecordCMD:
+						// read from client
+						ofh = (FileHandle) ReadInput.readObject();
+						RecordID = (RID) ReadInput.readObject();
+						
+						// execute on master
+						retval = this.DeleteRecord(ofh, RecordID);
+						
+						// return to client
+						WriteOutput.writeObject(ofh);
+						WriteOutput.flush();
+						WriteOutput.writeObject(RecordID);
+						WriteOutput.flush();
+						
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						
+						break;
+						
+					case ReadFirstRecordCMD:
+						// read from client
+						ofh = (FileHandle) ReadInput.readObject();
+						RecordID = (RID) ReadInput.readObject();
+						
+						// execute on master
+						retval = this.ReadFirstRecord(ofh, RecordID);
+						
+						// return to client
+						WriteOutput.writeObject(ofh);
+						WriteOutput.flush();
+						WriteOutput.writeObject(RecordID);
+						WriteOutput.flush();
+						
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						
+						break;
+						
+					case ReadLastRecordCMD:
+						// read from client
+						ofh = (FileHandle) ReadInput.readObject();
+						RecordID = (RID) ReadInput.readObject();
+						
+						// execute on master
+						retval = this.ReadLastRecord(ofh, RecordID);
+						
+						// return to client
+						WriteOutput.writeObject(ofh);
+						WriteOutput.flush();
+						WriteOutput.writeObject(RecordID);
+						WriteOutput.flush();
+						
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						
+						break;
+						
+					case ReadNextRecordCMD:
+						// read from client
+						ofh = (FileHandle) ReadInput.readObject();
+						pivot = (RID) ReadInput.readObject();
+						RecordID = (RID) ReadInput.readObject();
+						
+						// execute on master
+						retval = this.ReadNextRecord(ofh, pivot, RecordID);
+						
+						// return to client
+						WriteOutput.writeObject(ofh);
+						WriteOutput.flush();
+						WriteOutput.writeObject(RecordID);
+						WriteOutput.flush();
+						
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						
+						break;
+						
+					case ReadPrevRecordCMD:
+						// read from client
+						ofh = (FileHandle) ReadInput.readObject();
+						pivot = (RID) ReadInput.readObject();
+						RecordID = (RID) ReadInput.readObject();
+						
+						// execute on master
+						retval = this.ReadPrevRecord(ofh, pivot, RecordID);
 						
 						// return to client
 						WriteOutput.writeObject(ofh);

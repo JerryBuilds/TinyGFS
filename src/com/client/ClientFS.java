@@ -317,7 +317,7 @@ public class ClientFS {
 	public FSReturnVals CloseFile(FileHandle ofh) {
 		try {
 			// send command
-			WriteOutput.writeInt(Master.OpenFileCMD);
+			WriteOutput.writeInt(Master.CloseFileCMD);
 			
 			// send arguments
 			WriteOutput.writeObject(ofh);
