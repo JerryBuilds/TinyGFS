@@ -32,7 +32,7 @@ public class ClientFS {
 		DirDoesNotExist
 	}
 	public static Master master;
-	public static ChunkServer chunkserver1;
+	public static ChunkServer chunkserver1 = new ChunkServer();
 	public static Client client;
 	
 	public static int MasterPort = 0;
@@ -45,13 +45,13 @@ public class ClientFS {
 	public static ObjectInputStream ReadInput;
 	
 	public ClientFS() {
-		master = new Master();
-		chunkserver1 = new ChunkServer();
-		if (chunkserver1 == null) {
-			System.out.println("cs is null in ClientFS constructor");
-		}
+//		master = new Master();
+//		chunkserver1 = new ChunkServer();
+//		if (chunkserver1 == null) {
+//			System.out.println("cs is null in ClientFS constructor");
+//		}
 		client = new Client();
-//		InitializeMasterConnection();
+		InitializeMasterConnection();
 	}
 	
 	public void InitializeMasterConnection() {
@@ -88,7 +88,7 @@ public class ClientFS {
 	 * "CSCI485"), CreateDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals CreateDir(String src, String dirname) {
-		/*try {
+		try {
 			// send command
 			WriteOutput.writeInt(Master.CreateDirCMD);
 			
@@ -107,8 +107,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-		return null;*/
-		return master.CreateDir(src, dirname);
+		return null;
+//		return master.CreateDir(src, dirname);
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class ClientFS {
 	 * Example usage: DeleteDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		/*try {
+		try {
 			// send command
 			WriteOutput.writeInt(Master.DeleteDirCMD);
 			
@@ -138,8 +138,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-		return null;*/
-		return master.DeleteDir(src, dirname);
+		return null;
+//		return master.DeleteDir(src, dirname);
 	}
 
 	/**
@@ -151,7 +151,7 @@ public class ClientFS {
 	 * "/Shahram/CSCI485" to "/Shahram/CSCI550"
 	 */
 	public FSReturnVals RenameDir(String src, String NewName) {
-		/*try {
+		try {
 			// send command
 			WriteOutput.writeInt(Master.RenameDirCMD);
 			
@@ -170,8 +170,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-		return null;*/
-		return master.RenameDir(src, NewName);
+		return null;
+//		return master.RenameDir(src, NewName);
 	}
 
 	/**
@@ -182,7 +182,7 @@ public class ClientFS {
 	 * Example usage: ListDir("/Shahram/CSCI485")
 	 */
 	public String[] ListDir(String tgt) {
-		/*try {
+		try {
 			// send command
 			WriteOutput.writeInt(Master.ListDirCMD);
 			
@@ -203,8 +203,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-		return null;*/
-		return master.ListDir(tgt);
+		return null;
+//		return master.ListDir(tgt);
 	}
 
 	/**
@@ -215,7 +215,7 @@ public class ClientFS {
 	 * Example usage: Createfile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		/*try {
+		try {
 			// send command
 			WriteOutput.writeInt(Master.CreateFileCMD);
 			
@@ -234,8 +234,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-		return null;*/
-		return master.CreateFile(tgtdir, filename);
+		return null;
+//		return master.CreateFile(tgtdir, filename);
 	}
 
 	/**
@@ -246,7 +246,7 @@ public class ClientFS {
 	 * Example usage: DeleteFile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		/*try {
+		try {
 			// send command
 			WriteOutput.writeInt(Master.DeleteFileCMD);
 			
@@ -265,8 +265,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-		return null;*/
-		return master.DeleteFile(tgtdir, filename);
+		return null;
+//		return master.DeleteFile(tgtdir, filename);
 	}
 
 	/**
@@ -277,7 +277,7 @@ public class ClientFS {
 	 * Example usage: OpenFile("/Shahram/CSCI485/Lecture1/Intro.pptx")
 	 */
 	public FSReturnVals OpenFile(String FilePath, FileHandle ofh) {
-		/*try {
+		try {
 			// send command
 			WriteOutput.writeInt(Master.OpenFileCMD);
 			
@@ -305,8 +305,8 @@ public class ClientFS {
 		
 		
 		
-		return null;*/
-		return master.OpenFile(FilePath, ofh);
+		return null;
+//		return master.OpenFile(FilePath, ofh);
 	}
 
 	/**
@@ -315,7 +315,7 @@ public class ClientFS {
 	 * Example usage: CloseFile(FH1)
 	 */
 	public FSReturnVals CloseFile(FileHandle ofh) {
-		/*try {
+		try {
 			// send command
 			WriteOutput.writeInt(Master.OpenFileCMD);
 			
@@ -341,8 +341,8 @@ public class ClientFS {
 		}
 		
 		
-		return null;*/
-		return master.CloseFile(ofh);
+		return null;
+//		return master.CloseFile(ofh);
 	}
 
 }

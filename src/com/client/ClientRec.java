@@ -16,7 +16,7 @@ public class ClientRec {
 	 * Example usage: AppendRecord(FH1, obama, RecID1)
 	 */
 	public FSReturnVals AppendRecord(FileHandle ofh, byte[] payload, RID RecordID) {
-		/*
+		
 		FSReturnVals converted = null;
 		
 		try {
@@ -55,12 +55,12 @@ public class ClientRec {
 		if (converted != FSReturnVals.Success) {
 			return converted;
 		}
-		*/
 		
-		FSReturnVals retval = ClientFS.master.AppendRecord(ofh, RecordID, payload.length);
-		if (retval != FSReturnVals.Success) {
-			return retval;
-		}
+		
+//		FSReturnVals retval = ClientFS.master.AppendRecord(ofh, RecordID, payload.length);
+//		if (retval != FSReturnVals.Success) {
+//			return retval;
+//		}
 		
 		// write to chunkserver
 		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
