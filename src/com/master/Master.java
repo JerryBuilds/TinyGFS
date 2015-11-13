@@ -45,7 +45,14 @@ public class Master {
 	public static final int WRITTEN = 303;
 	public static final int UNWRITTEN = 304;
 	private boolean [] ChunkServerAvailability = {true};
-	public static int ChunkServerCount = 1; // TO BE CHANGED LATER
+	private static final int ChunkServerExpected = 1; // TO BE CHANGED LATER
+	private static int ChunkServerCount = 0; // TO BE CHANGED LATER
+	
+	
+	private ServerSocket csCommChannel;
+	private Socket csConnection;
+	private ObjectOutputStream WriteOutputToCS;
+	private ObjectInputStream ReadInputFromCS;
 	
 	private Tree namespace;
 	
@@ -639,7 +646,7 @@ public class Master {
 	}
 	
 	// process client requests through socket programming
-	public void ReadAndProcessRequests()
+	public void ReadAndProcessClientRequests()
 	{
 		
 		//Used for communication with the Client via the network
@@ -979,14 +986,43 @@ public class Master {
 		}
 	}
 	
+	public void ChunkServerConnect() {
+		
+		
+		while (ChunkServerCount != ChunkServerExpected) {
+			
+			int ServerPort = 0; // automatically ask OS to find open port
+			
+			try {
+				// Open connection up to ChunkServers
+				csCommChannel = new ServerSocket(ServerPort);
+				ServerPort = csCommChannel.getLocalPort();
+				PrintWriter outWrite=new PrintWriter(new FileOutputStream(ChunkServer.MasterChunkServerConfigFile));
+				outWrite.println("localhost:"+ServerPort);
+				outWrite.close();
+				
+				
+				// ChunkServer connects to Master
+				csConnection = csCommChannel.accept();
+				WriteOutputToCS = new ObjectOutputStream(csConnection.getOutputStream());
+				ReadInputFromCS = new ObjectInputStream(csConnection.getInputStream());
+				
+				
+			} catch (IOException e) {
+				System.out.println("Error, failed to open a new socket to listen on.");
+				e.printStackTrace();
+			}
+			
+			
+		}
+		
+	}
+	
 	/*
 	 * 
 	 * UTILITY FUNCTIONS
 	 * 
 	 */
-	
-	// Converts FSReturnVal into String, then send over socket
-	// ClientFS/Rec will have proper method to receive
 	
 	
 	// given a path, returns a list of each directory
@@ -1042,6 +1078,7 @@ public class Master {
 	
 	
 	// this method is here because Java is stupid
+	// RAGE RAGE RAGE
 	int IndexOf(LinkedList<RID> myll, RID myrid) {
 		int index = -1;
 		RID tempRid;
@@ -1060,6 +1097,7 @@ public class Master {
 	public static void main(String [] args) {
 		Master ms = new Master();
 //		ms.CommandLine();
-		ms.ReadAndProcessRequests();
+		ms.ChunkServerConnect();
+		ms.ReadAndProcessClientRequests();
 	}
 }

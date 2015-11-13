@@ -26,6 +26,11 @@ public class ChunkServer implements ChunkServerInterface {
 	final static String filePath = "csci485/";	//or C:\\newfile.txt
 	public final static String ClientChunkServerConfigFile = "ClientChunkServerConfig.txt";
 	public final static String MasterChunkServerConfigFile = "MasterChunkServerConfig.txt";
+	public final static String [] MasterCSconfigFiles = {
+			"MasterCS1Config.txt",
+			"MasterCS2Config.txt",
+			"MasterCS3Config.txt"
+	};
 	public final static String [] ClientCSconfigFiles = {
 			"ClientCS1Config.txt",
 			"ClientCS2Config.txt",
@@ -221,9 +226,14 @@ public class ChunkServer implements ChunkServerInterface {
 			}
 		}
 	}
+	
+	public static void ConnectToMaster() {
+		
+	}
 
 	public static void main(String args[])
 	{
+//		ConnectToMaster();
 		ReadAndProcessRequests();
 	}
 }
