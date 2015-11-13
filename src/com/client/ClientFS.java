@@ -1,7 +1,17 @@
 package com.client;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
+import com.chunkserver.ChunkServer;
 import com.master.Master;
-import com.chunkserver.*;
 
 public class ClientFS {
 
@@ -23,10 +33,32 @@ public class ClientFS {
 	public static Master master;
 	public static ChunkServer chunkserver1;
 	public static Client client;
-	public ClientFS() {
-		master = new Master();
-		chunkserver1 = new ChunkServer();
-		client = new Client();
+	static Socket ClientSocket;
+	static ObjectOutputStream WriteOutput;
+	static ObjectInputStream ReadInput;
+	static BufferedReader BR;
+	static BufferedWriter BW;
+	static PrintStream PS;
+	public ClientFS() {;
+			try {
+				ClientSocket = new Socket("localhost", 1240);
+				WriteOutput = new ObjectOutputStream(ClientSocket.getOutputStream());
+				ReadInput = new ObjectInputStream(ClientSocket.getInputStream());
+				BR = new BufferedReader(
+			            new InputStreamReader(ClientSocket.getInputStream()));
+				PrintStream PS = new PrintStream(ClientSocket.getOutputStream());
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				System.out.println("Couldn't create a socket");
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				System.out.println("IOException with creating a socket");
+				e.printStackTrace();
+			}
+
+	
+		
 	}
 
 	/**
@@ -38,8 +70,24 @@ public class ClientFS {
 	 * "CSCI485"), CreateDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals CreateDir(String src, String dirname) {
-		return master.CreateDir(src, dirname);
-		//return null;
+		try {
+		
+
+
+	
+		PS.println("CreateDir");
+		PS.println(src);
+		PS.println(dirname);
+		PS.flush();
+		FSReturnVals data = FSReturnVals.valueOf(BR.readLine());
+		return data;
+		 
+	}
+		catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
 	}
 
 	/**
@@ -50,8 +98,20 @@ public class ClientFS {
 	 * Example usage: DeleteDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		return master.DeleteDir(src, dirname);
-		//return null;
+		try {
+			PS.println("DeleteDir");
+			PS.println(src);
+			PS.println(dirname);
+			PS.flush();
+			FSReturnVals data = FSReturnVals.valueOf(BR.readLine());
+			return data;
+			 
+		}
+			catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+			
 	}
 
 	/**
@@ -63,8 +123,19 @@ public class ClientFS {
 	 * "/Shahram/CSCI485" to "/Shahram/CSCI550"
 	 */
 	public FSReturnVals RenameDir(String src, String NewName) {
-		return master.RenameDir(src, NewName);
-		//return null;
+		try {
+			PS.println("RenameDir");
+			PS.println(src);
+			PS.println(NewName);
+			PS.flush();
+			FSReturnVals data = FSReturnVals.valueOf(BR.readLine());
+			return data;
+			 
+		}
+			catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
 	}
 
 	/**
@@ -75,8 +146,25 @@ public class ClientFS {
 	 * Example usage: ListDir("/Shahram/CSCI485")
 	 */
 	public String[] ListDir(String tgt) {
-		return master.ListDir(tgt);
-		//return null;
+		try {
+			PS.println("ListDir");
+			PS.println(tgt);
+			PS.flush();
+			String[] myObjects;
+			try {
+				myObjects = (String[])ReadInput.readObject();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
+			return myObjects;
+			 
+		}
+			catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
 	}
 
 	/**

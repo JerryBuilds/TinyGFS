@@ -1,11 +1,18 @@
 package com.master;
 
-import com.client.FileHandle;
-import com.master.Node;
-import com.client.ClientFS.FSReturnVals;
-
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
+
+import com.client.ClientFS.FSReturnVals;
+import com.client.FileHandle;
 
 public class Master {
 	
@@ -301,9 +308,67 @@ public class Master {
 	}
 	
 	// process client requests through socket programming
-	public void ReadAndProcessRequests() {
+	public static void ReadAndProcessRequests() {
+		Master ms = new Master();
+		ServerSocket commChannel = null;
+		ObjectOutputStream WriteOutput = null;
+		ObjectInputStream ReadInput = null;
+		PrintStream PS = null;
+		Socket ClientConnection = null;
+		BufferedReader BR = null;
 		
+		try {
+			commChannel = new ServerSocket(1240);
+			
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 		
+		boolean done = false;
+		
+		while (!done) {
+			try  {
+				ClientConnection = commChannel.accept();
+
+				ReadInput = new ObjectInputStream(ClientConnection.getInputStream());
+				WriteOutput = new ObjectOutputStream(ClientConnection.getOutputStream());
+				PS = new PrintStream(ClientConnection.getOutputStream());
+				BR = new BufferedReader(
+			            new InputStreamReader(ClientConnection.getInputStream()));
+				
+				while (!ClientConnection.isClosed()) {
+					String cmd = BR.readLine();
+					if (cmd == "CreateDir") {
+						String source = BR.readLine();
+						String dir = BR.readLine();
+						PS.println(ms.CreateDir(source, dir));
+					}
+					if (cmd == "DeleteDir") {
+						String source = BR.readLine();
+						String dir = BR.readLine();
+						PS.println(ms.CreateDir(source,  dir));
+					}
+					if (cmd == "RenameDir") {
+						String source = BR.readLine();
+						String name = BR.readLine();
+						PS.println(ms.CreateDir(source, name));
+					}
+					if (cmd == "ListDir") {
+						String tgt = BR.readLine();
+						WriteOutput.writeObject(ms.ListDir(tgt));
+						
+					}
+				}
+				PS.flush();
+
+				
+			}
+			catch (IOException ex) {
+				ex.printStackTrace();
+			}
+			
+		}
 		
 	}
 	
@@ -329,7 +394,6 @@ public class Master {
 	}
 	
 	public static void main(String [] args) {
-		Master ms = new Master();
-		ms.CommandLine();
+		ReadAndProcessRequests();
 	}
 }
