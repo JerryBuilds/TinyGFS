@@ -45,7 +45,7 @@ public class Master {
 	public static final int WRITTEN = 303;
 	public static final int UNWRITTEN = 304;
 	private boolean [] ChunkServerAvailability = {true};
-	public static int ChunkServerCount = 1; // TO BE CHANGED LATER
+	public static int ChunkServerCount = 1; // TODO CHANGE LATER
 	
 	private Tree namespace;
 	
@@ -237,7 +237,7 @@ public class Master {
 			// create new RID
 			RID newRid = new RID();
 			ChunkServer tempcs = ClientFS.chunkserver1;
-			newRid.chunkhandle = ClientFS.chunkserver1.createChunk(); // TO BE CHANGED LATER
+			newRid.chunkhandle = ClientFS.chunkserver1.createChunk(); // TODO CHANGE LATER
 			newRid.byteoffset = 0;
 			newRid.size = size;
 			
@@ -249,7 +249,7 @@ public class Master {
 			// update metadata
 			fmd.RecordIDInfo.add(newRid);
 			for (int i=0; i < ChunkServerCount; i++) {
-				fmd.ChunkServerWritten.get(i).add(true); // TO BE CHANGED LATER
+				fmd.ChunkServerWritten.get(i).add(true); // TODO CHANGE LATER
 				// When CS is networked with master,
 				// this value will start as UNWRITTEN
 				// and CS will use heartbeat to
@@ -261,7 +261,7 @@ public class Master {
 			ofh.ChunkServerStatus = new int[ChunkServerCount];
 			for (int i=0; i < ChunkServerCount; i++) {
 				if (ChunkServerAvailability[i] == true) {
-					ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
+					ofh.ChunkServerStatus[i] = WRITTEN; // TODO CHANGE LATER
 													// When CS is networked with master,
 													// this value will start as UNWRITTEN
 													// and CS will use heartbeat to
@@ -290,14 +290,14 @@ public class Master {
 				
 				// create new RID
 				RID newRid = new RID();
-				newRid.chunkhandle = ClientFS.chunkserver1.createChunk(); // TO BE CHANGED LATER
+				newRid.chunkhandle = ClientFS.chunkserver1.createChunk(); // TODO CHANGE LATER
 				newRid.byteoffset = 0;
 				newRid.size = size;
 				
 				// update metadata
 				fmd.RecordIDInfo.add(newRid);
 				for (int i=0; i < ChunkServerCount; i++) {
-					fmd.ChunkServerWritten.get(i).add(true); // TO BE CHANGED LATER
+					fmd.ChunkServerWritten.get(i).add(true); // TODO CHANGE LATER
 					// When CS is networked with master,
 					// this value will start as UNWRITTEN
 					// and CS will use heartbeat to
@@ -308,7 +308,7 @@ public class Master {
 				ofh.ChunkServerStatus = new int[ChunkServerCount];
 				for (int i=0; i < ChunkServerCount; i++) {
 					if (ChunkServerAvailability[i] == true) {
-						ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
+						ofh.ChunkServerStatus[i] = WRITTEN; // TODO CHANGE LATER
 						// When CS is networked with master,
 						// this value will start as UNWRITTEN
 						// and CS will use heartbeat to
@@ -336,7 +336,7 @@ public class Master {
 				// update metadata
 				fmd.RecordIDInfo.add(newRid);
 				for (int i=0; i < ChunkServerCount; i++) {
-					fmd.ChunkServerWritten.get(i).add(true); // TO BE CHANGED LATER
+					fmd.ChunkServerWritten.get(i).add(true); // TODO CHANGE LATER
 					// When CS is networked with master,
 					// this value will start as UNWRITTEN
 					// and CS will use heartbeat to
@@ -347,7 +347,7 @@ public class Master {
 				ofh.ChunkServerStatus = new int[ChunkServerCount];
 				for (int i=0; i < ChunkServerCount; i++) {
 					if (ChunkServerAvailability[i] == true) {
-						ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
+						ofh.ChunkServerStatus[i] = WRITTEN; // TODO CHANGE LATER
 						// When CS is networked with master,
 						// this value will start as UNWRITTEN
 						// and CS will use heartbeat to
@@ -989,11 +989,12 @@ public class Master {
 	// ClientFS/Rec will have proper method to receive
 	
 	
-	// given a path, returns a list of each directory
-	// For example, path = "/Jerry/Documents/File1"
-	// will return: { "", "Jerry", "Documents", "File1" }
-	// For example, path = "/Jerry/Documents/Homework/"
-	// will return: { "", "Jerry", "Documents", "Homework" }
+	/* given a path, returns a list of each directory
+	 * For example, path = "/Jerry/Documents/File1"
+	 * will return: { "", "Jerry", "Documents", "File1" }
+	 * For example, path = "/Jerry/Documents/Homework/"
+	 * will return: { "", "Jerry", "Documents", "Homework" }
+	*/
 	private ArrayList<String> ParsePath(String path) {
 		ArrayList<String> directories = new ArrayList<String>();
 		
