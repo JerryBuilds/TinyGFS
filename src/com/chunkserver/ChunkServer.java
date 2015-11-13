@@ -24,7 +24,8 @@ import com.interfaces.ChunkServerInterface;
 
 public class ChunkServer implements ChunkServerInterface {
 	final static String filePath = "csci485/";	//or C:\\newfile.txt
-	public final static String ClientConfigFile = "ClientConfig.txt";
+	public final static String ClientChunkServerConfigFile = "ClientChunkServerConfig.txt";
+	public final static String MasterChunkServerConfigFile = "MasterChunkServerConfig.txt";
 	public final static int ChunkSize = 1024 * 1024; //1024 KB chunk sizes
 	
 	//Used for the file system
@@ -124,7 +125,7 @@ public class ChunkServer implements ChunkServerInterface {
 			//Allocate a port and write it to the config file for the Client to consume
 			commChanel = new ServerSocket(ServerPort);
 			ServerPort=commChanel.getLocalPort();
-			PrintWriter outWrite=new PrintWriter(new FileOutputStream(ClientConfigFile));
+			PrintWriter outWrite=new PrintWriter(new FileOutputStream(ClientChunkServerConfigFile));
 			outWrite.println("localhost:"+ServerPort);
 			outWrite.close();
 		} catch (IOException ex) {

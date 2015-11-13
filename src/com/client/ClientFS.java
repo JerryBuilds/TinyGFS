@@ -1,7 +1,15 @@
 package com.client;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.Socket;
+
+import com.chunkserver.ChunkServer;
 import com.master.Master;
-import com.chunkserver.*;
 
 public class ClientFS {
 
@@ -24,10 +32,36 @@ public class ClientFS {
 	public static Master master;
 	public static ChunkServer chunkserver1;
 	public static Client client;
+	
+	private static int MasterPort = 0;
+	private static Socket ClientMasterSocket;
+	private static DataOutputStream WriteOutput;
+	private static DataInputStream ReadInput; 
+	
 	public ClientFS() {
-		master = new Master();
+//		master = new Master();
 		chunkserver1 = new ChunkServer();
 		client = new Client();
+		InitializeMasterConnection();
+	}
+	
+	public void InitializeMasterConnection() {
+		if (ClientMasterSocket != null) return; //The client is already connected
+		try {
+			BufferedReader binput = new BufferedReader(new FileReader(Master.MasterClientConfigFile));
+			String port = binput.readLine();
+			port = port.substring( port.indexOf(':')+1 );
+			MasterPort = Integer.parseInt(port);
+			
+			ClientMasterSocket = new Socket("127.0.0.1", MasterPort);
+			WriteOutput = new DataOutputStream(ClientMasterSocket.getOutputStream());
+			ReadInput = new DataInputStream(ClientMasterSocket.getInputStream());
+		}catch (FileNotFoundException e) {
+			System.out.println("Error (Client), the config file "+ Master.MasterClientConfigFile +" containing the port of the ChunkServer is missing.");
+		}catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("Can't find file.");
+		}
 	}
 
 	/**
@@ -39,8 +73,27 @@ public class ClientFS {
 	 * "CSCI485"), CreateDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals CreateDir(String src, String dirname) {
-		return master.CreateDir(src, dirname);
-		//return null;
+		try {
+			// send command
+			WriteOutput.writeInt(Master.CreateDirCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(src);
+			WriteOutput.writeUTF(dirname);
+			WriteOutput.flush();
+			
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+//		return master.CreateDir(src, dirname);
+		return null;
 	}
 
 	/**
@@ -51,8 +104,27 @@ public class ClientFS {
 	 * Example usage: DeleteDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		return master.DeleteDir(src, dirname);
-		//return null;
+		try {
+			// send command
+			WriteOutput.writeInt(Master.DeleteDirCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(src);
+			WriteOutput.writeUTF(dirname);
+			WriteOutput.flush();
+
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+//		return master.DeleteDir(src, dirname);
+		return null;
 	}
 
 	/**
@@ -64,8 +136,27 @@ public class ClientFS {
 	 * "/Shahram/CSCI485" to "/Shahram/CSCI550"
 	 */
 	public FSReturnVals RenameDir(String src, String NewName) {
-		return master.RenameDir(src, NewName);
-		//return null;
+		try {
+			// send command
+			WriteOutput.writeInt(Master.RenameDirCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(src);
+			WriteOutput.writeUTF(NewName);
+			WriteOutput.flush();
+
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+//		return master.RenameDir(src, NewName);
+		return null;
 	}
 
 	/**
@@ -76,8 +167,29 @@ public class ClientFS {
 	 * Example usage: ListDir("/Shahram/CSCI485")
 	 */
 	public String[] ListDir(String tgt) {
-		return master.ListDir(tgt);
-		//return null;
+		try {
+			// send command
+			WriteOutput.writeInt(Master.ListDirCMD);
+			
+			// send argument
+			WriteOutput.writeUTF(tgt);
+			WriteOutput.flush();
+			
+			// retrieve response
+			int lsSize = ReadInput.readInt();
+			String [] retval = new String[lsSize];
+			for (int i=0; i < lsSize; i++) {
+				retval[i] = ReadInput.readUTF();
+			}
+			
+			return retval;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+//		return master.ListDir(tgt);
+		return null;
 	}
 
 	/**
@@ -88,8 +200,27 @@ public class ClientFS {
 	 * Example usage: Createfile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		return master.CreateFile(tgtdir, filename);
-		//return null;
+		try {
+			// send command
+			WriteOutput.writeInt(Master.CreateFileCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(tgtdir);
+			WriteOutput.writeUTF(filename);
+			WriteOutput.flush();
+
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+//		return master.CreateFile(tgtdir, filename);
+		return null;
 	}
 
 	/**
@@ -100,6 +231,25 @@ public class ClientFS {
 	 * Example usage: DeleteFile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
+		try {
+			// send command
+			WriteOutput.writeInt(Master.DeleteFileCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(tgtdir);
+			WriteOutput.writeUTF(filename);
+			WriteOutput.flush();
+
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		return master.DeleteFile(tgtdir, filename);
 		//return null;
 	}

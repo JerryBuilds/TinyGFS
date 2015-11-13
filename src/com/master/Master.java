@@ -1,18 +1,46 @@
 package com.master;
 
-import com.client.ClientFS;
-import com.client.FileHandle;
-import com.client.RID;
-import com.master.Node;
-import com.client.ClientFS.FSReturnVals;
-
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
 
+import com.chunkserver.ChunkServer;
+import com.client.Client;
+import com.client.ClientFS;
+import com.client.ClientFS.FSReturnVals;
+import com.client.FileHandle;
+import com.client.RID;
+
 public class Master {
+
+	public final static String MasterClientConfigFile = "MasterClientConfig.txt";
 	
-	Tree namespace;
+	//Commands recognized by the Master from Client
+	public static final int CreateDirCMD = 201;
+	public static final int DeleteDirCMD = 202;
+	public static final int RenameDirCMD = 203;
+	public static final int ListDirCMD = 204;
+	public static final int CreateFileCMD = 205;
+	public static final int DeleteFileCMD = 206;
+	public static final int OpenFileCMD = 207;
+	public static final int CloseFileCMD = 208;
+	public static final int AppendRecordCMD = 209;
+	public static final int DeleteRecordCMD = 210;
+	public static final int ReadFirstRecordCMD = 211;
+	public static final int ReadLastRecordCMD = 212;
+	public static final int ReadNextRecordCMD = 213;
+	public static final int ReadPrevRecordCMD = 214;
+	
+	private Tree namespace;
 	
 	public Master() {
 		// initialize all data structure
@@ -179,7 +207,7 @@ public class Master {
 	
 	public FSReturnVals AppendRecord(FileHandle ofh, RID RecordID, int size) {
 		// cannot write a record that is bigger than chunk's size
-		if (size > ClientFS.chunkserver1.ChunkSize) {
+		if (size > ChunkServer.ChunkSize) {
 			System.out.println("Record is larger than chunk size. Cannot AppendRecord.");
 			return FSReturnVals.Fail;
 		}
@@ -219,7 +247,7 @@ public class Master {
 			
 			// calculate space left in current chunk
 			RID tailRid = fmd.cs1info.getLast();
-			int spaceleft = ClientFS.chunkserver1.ChunkSize - tailRid.byteoffset - tailRid.size;
+			int spaceleft = ChunkServer.ChunkSize - tailRid.byteoffset - tailRid.size;
 			
 
 			// Case 2a: Chunk does not have enough room (must create new chunk)
@@ -495,10 +523,165 @@ public class Master {
 	}
 	
 	// process client requests through socket programming
-	public void ReadAndProcessRequests() {
+	public void ReadAndProcessRequests()
+	{
 		
+		//Used for communication with the Client via the network
+		int ServerPort = 0; //Set to 0 to cause ServerSocket to allocate the port 
+		ServerSocket commChanel = null;
+		DataOutputStream WriteOutput = null;
+		DataInputStream ReadInput = null;
 		
+		try {
+			//Allocate a port and write it to the config file for the Client to consume
+			commChanel = new ServerSocket(ServerPort);
+			ServerPort=commChanel.getLocalPort();
+			PrintWriter outWrite=new PrintWriter(new FileOutputStream(MasterClientConfigFile));
+			outWrite.println("localhost:"+ServerPort);
+			outWrite.close();
+		} catch (IOException ex) {
+			System.out.println("Error, failed to open a new socket to listen on.");
+			ex.printStackTrace();
+		}
 		
+//		boolean done = false;
+		Socket ClientConnection = null;  //A client's connection to the server
+		
+		String src, dirname, NewName, tgtdir, filename;
+		ClientFS.FSReturnVals retval;
+		String converted;
+
+		while (true){
+			try {
+				System.out.println("Waiting on incoming client connections...");
+				ClientConnection = commChanel.accept();
+				ReadInput = new DataInputStream(ClientConnection.getInputStream());
+				WriteOutput = new DataOutputStream(ClientConnection.getOutputStream());
+				
+				//Use the existing input and output stream as long as the client is connected
+				while (!ClientConnection.isClosed()) {
+					int CMD = ReadInput.readInt();
+					switch (CMD){
+					case CreateDirCMD:
+						// read from client
+						src = ReadInput.readUTF();
+						dirname = ReadInput.readUTF();
+						
+						// execute on master
+						retval = this.CreateDir(src, dirname);
+						
+						// return to client
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						break;
+					
+					case ListDirCMD:
+						// read from client
+						String tgt = ReadInput.readUTF();
+						
+						// execute on master
+						String [] retlist = this.ListDir(tgt);
+						
+						// return to client
+						int lsSize = retlist.length;
+						WriteOutput.writeInt(lsSize);
+						for (int i=0; i < lsSize; i++) {
+							WriteOutput.writeUTF(retlist[i]);
+						}
+						WriteOutput.flush();
+						
+						break;
+					
+					case DeleteDirCMD:
+						// read from client
+						src = ReadInput.readUTF();
+						dirname = ReadInput.readUTF();
+						
+						// execute on master
+						retval = this.DeleteDir(src, dirname);
+
+						// return to client
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						break;
+
+					case RenameDirCMD:
+						// read from client
+						src = ReadInput.readUTF();
+						NewName = ReadInput.readUTF();
+						
+						// execute on master
+						retval = this.RenameDir(src, NewName);
+
+						// return to client
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						break;
+
+					case CreateFileCMD:
+						// read from client
+						tgtdir = ReadInput.readUTF();
+						filename = ReadInput.readUTF();
+						
+						// execute on master
+						retval = this.CreateFile(tgtdir, filename);
+
+						// return to client
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						break;
+
+					case DeleteFileCMD:
+						// read from client
+						tgtdir = ReadInput.readUTF();
+						filename = ReadInput.readUTF();
+						
+						// execute on master
+						retval = this.DeleteFile(tgtdir, filename);
+
+						// return to client
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						break;
+						
+//					case CreateChunkCMD:
+//						String chunkhandle = cs.createChunk();
+//						byte[] CHinbytes = chunkhandle.getBytes();
+//						WriteOutput.writeInt(ChunkServer.PayloadSZ + CHinbytes.length);
+//						WriteOutput.write(CHinbytes);
+//						WriteOutput.flush();
+//						break;
+
+					default:
+						System.out.println("Error in Master, specified CMD "+CMD+" is not recognized.");
+						break;
+					}
+				}
+			} catch (IOException ex){
+				System.out.println("ClientFS Disconnected");
+			} finally {
+				try {
+					if (ClientConnection != null)
+						ClientConnection.close();
+					if (ReadInput != null)
+						ReadInput.close();
+					if (WriteOutput != null) WriteOutput.close();
+				} catch (IOException fex){
+					System.out.println("Error (ChunkServer):  Failed to close either a valid connection or its input/output stream.");
+					fex.printStackTrace();
+				}
+			}
+		}
 	}
 	
 	/*
@@ -506,6 +689,10 @@ public class Master {
 	 * UTILITY FUNCTIONS
 	 * 
 	 */
+	
+	// Converts FSReturnVal into String, then send over socket
+	// ClientFS/Rec will have proper method to receive
+	
 	
 	// given a path, returns a list of each directory
 	// For example, path = "/Jerry/Documents/File1"
@@ -560,6 +747,7 @@ public class Master {
 	
 	public static void main(String [] args) {
 		Master ms = new Master();
-		ms.CommandLine();
+//		ms.CommandLine();
+		ms.ReadAndProcessRequests();
 	}
 }
