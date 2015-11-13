@@ -45,7 +45,7 @@ public class Master {
 	public Master() {
 		// initialize all data structure
 		
-		Directory rootdir = new Directory();
+		DirectoryMD rootdir = new DirectoryMD();
 		rootdir.name = "";
 		namespace = new Tree(rootdir);
 		
@@ -64,7 +64,7 @@ public class Master {
 		}
 		
 		// add directory
-		Directory newDirectory = new Directory();
+		DirectoryMD newDirectory = new DirectoryMD();
 		newDirectory.name = dirname;
 		newNode.AddChild(newDirectory);
 		
@@ -151,7 +151,7 @@ public class Master {
 		}
 		
 		// add directory
-		File newFile = new File();
+		FileMD newFile = new FileMD();
 		newFile.name = filename;
 		newNode.AddChild(newFile);
 		
@@ -219,7 +219,7 @@ public class Master {
 		}
 		
 		// get file metadata
-		File fmd = (File) tempNode.GetData();
+		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		
 		// Case 1: File has never been written to, or is empty
@@ -300,7 +300,7 @@ public class Master {
 		}
 		
 		// get file metadata
-		File fmd = (File) tempNode.GetData();
+		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
 		if (fmd.cs1info.isEmpty()) {
@@ -330,7 +330,7 @@ public class Master {
 		}
 		
 		// get file metadata
-		File fmd = (File) tempNode.GetData();
+		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
 		if (fmd.cs1info.isEmpty()) {
@@ -358,7 +358,7 @@ public class Master {
 		}
 		
 		// get file metadata
-		File fmd = (File) tempNode.GetData();
+		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
 		if (fmd.cs1info.isEmpty()) {
@@ -386,7 +386,7 @@ public class Master {
 		}
 		
 		// get file metadata
-		File fmd = (File) tempNode.GetData();
+		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
 		if (fmd.cs1info == null) {
@@ -436,7 +436,7 @@ public class Master {
 		}
 		
 		// get file metadata
-		File fmd = (File) tempNode.GetData();
+		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
 		if (fmd.cs1info == null) {

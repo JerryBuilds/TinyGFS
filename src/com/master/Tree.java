@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class Tree {
 	public Node root;
 	
-	public Tree(Location rootData) {
+	public Tree(Metadata rootData) {
 		root = new Node();
 		root.SetData(rootData);
 	}

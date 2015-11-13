@@ -1,6 +1,6 @@
 package com.master;
 
-public class Location {
+public class Metadata {
 	String name;
 	//String fulldirpath;
 }

@@ -1,13 +1,13 @@
 package com.master;
 
-import com.master.Location;
-import com.master.Directory;
-import com.master.File;
+import com.master.Metadata;
+import com.master.DirectoryMD;
+import com.master.FileMD;
 
 import java.util.ArrayList;
 
 public class Node {
-	private Location data;
+	private Metadata data;
 	private Node parent;
 	private ArrayList<Node> children;
 	
@@ -16,7 +16,7 @@ public class Node {
 		parent = null;
 	}
 	
-	public Location GetData() {
+	public Metadata GetData() {
 		return data;
 	}
 	
@@ -24,7 +24,7 @@ public class Node {
 		return parent;
 	}
 	
-	public void SetData(Location nodeData) {
+	public void SetData(Metadata nodeData) {
 		data = nodeData;
 	}
 	
@@ -34,7 +34,7 @@ public class Node {
 	
 	// adds a new child
 	// returns the child
-	public Node AddChild(Location childData) {
+	public Node AddChild(Metadata childData) {
 		Node childNode = new Node();
 		childNode.parent = this;
 		childNode.data = childData;
