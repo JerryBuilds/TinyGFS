@@ -63,8 +63,8 @@ public class ClientRec {
 //		}
 		
 		// write to chunkserver
-		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
-		
+//		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
+		ClientFS.client.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
 		
 		return FSReturnVals.Success;
 	}
@@ -173,7 +173,8 @@ public class ClientRec {
 //		}
 		
 		// read from ChunkServer
-		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+//		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
 		for (int i=0; i < RecordID.size; i++) {
 			payload[i] = temp[i];
 		}
@@ -233,8 +234,8 @@ public class ClientRec {
 //		}
 		
 		// read from ChunkServer
-		byte[] temp = new byte[RecordID.size];
-		temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+//		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
 		for (int i=0; i < RecordID.size; i++) {
 			payload[i] = temp[i];
 		}
@@ -298,8 +299,8 @@ public class ClientRec {
 //		}
 		
 		// read from ChunkServer
-		byte[] temp = new byte[RecordID.size];
-		temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+//		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
 		for (int i=0; i < RecordID.size; i++) {
 			payload[i] = temp[i];
 		}
@@ -363,8 +364,8 @@ public class ClientRec {
 //		}
 		
 		// read from ChunkServer
-		byte[] temp = new byte[RecordID.size];
-		temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+//		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
 		for (int i=0; i < RecordID.size; i++) {
 			payload[i] = temp[i];
 		}
