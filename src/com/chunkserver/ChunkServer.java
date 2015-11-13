@@ -31,7 +31,7 @@ public class ChunkServer implements ChunkServerInterface {
 			"ClientCS2Config.txt",
 			"ClientCS3Config.txt"
 	};
-	public final static int ChunkSize = 4 * 1024; //1024 KB chunk sizes
+	public final static int ChunkSize = 1024 * 1024; //1024 KB chunk sizes
 	
 	//Used for the file system
 	public static long counter;

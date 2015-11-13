@@ -460,6 +460,7 @@ public class Master {
 		RID lastRid = fmd.RecordIDInfo.peekLast();
 		
 		// update FH and RID
+		ofh.ChunkServerStatus = new int[ChunkServerCount];
 		for (int i=0; i < ChunkServerCount; i++) {
 			if (ChunkServerAvailability[i] == true) {
 				if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
@@ -508,6 +509,7 @@ public class Master {
 		RID nextRid = fmd.RecordIDInfo.get(pivIndex+1);
 		
 		// update FH and RID
+		ofh.ChunkServerStatus = new int[ChunkServerCount];
 		for (int i=0; i < ChunkServerCount; i++) {
 			if (ChunkServerAvailability[i] == true) {
 				if (fmd.ChunkServerWritten.get(i).get(pivIndex+1) == true) {
@@ -556,6 +558,7 @@ public class Master {
 		RID nextRid = fmd.RecordIDInfo.get(pivIndex-1);
 		
 		// update FH and RID
+		ofh.ChunkServerStatus = new int[ChunkServerCount];
 		for (int i=0; i < ChunkServerCount; i++) {
 			if (ChunkServerAvailability[i] == true) {
 				if (fmd.ChunkServerWritten.get(i).get(pivIndex-1) == true) {
