@@ -1,6 +1,9 @@
 package com.client;
 
+import java.io.IOException;
+
 import com.client.ClientFS.FSReturnVals;
+import com.master.Master;
 
 public class ClientRec {
 
@@ -13,8 +16,47 @@ public class ClientRec {
 	 * Example usage: AppendRecord(FH1, obama, RecID1)
 	 */
 	public FSReturnVals AppendRecord(FileHandle ofh, byte[] payload, RID RecordID) {
+		/*
+		FSReturnVals converted = null;
+		
+		try {
+			// send command
+			ClientFS.WriteOutput.writeInt(Master.AppendRecordCMD);
+			
+			// send arguments
+			ClientFS.WriteOutput.writeObject(ofh);
+			ClientFS.WriteOutput.flush();
+			ClientFS.WriteOutput.writeObject(RecordID);
+			ClientFS.WriteOutput.flush();
+			ClientFS.WriteOutput.writeInt(payload.length);
+			ClientFS.WriteOutput.flush();
+
+			// retrieve response
+			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
+			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+			ofh.FilePath = tempFH.FilePath;
+			
+			RID tempRID = (RID) ClientFS.ReadInput.readObject();
+			RecordID.chunkhandle = tempRID.chunkhandle;
+			RecordID.byteoffset = tempRID.byteoffset;
+			RecordID.size = tempRID.size;
+			
+			String retval = ClientFS.ReadInput.readUTF();
+			converted = FSReturnVals.valueOf(retval);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
 		
 		// request info from master
+		if (converted != FSReturnVals.Success) {
+			return converted;
+		}
+		*/
+		
 		FSReturnVals retval = ClientFS.master.AppendRecord(ofh, RecordID, payload.length);
 		if (retval != FSReturnVals.Success) {
 			return retval;
@@ -22,6 +64,7 @@ public class ClientRec {
 		
 		// write to chunkserver
 		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
+		
 		
 		return FSReturnVals.Success;
 	}
@@ -53,8 +96,7 @@ public class ClientRec {
 		}
 		
 		// read from ChunkServer
-		byte[] temp = new byte[RecordID.size];
-		temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
 		for (int i=0; i < RecordID.size; i++) {
 			payload[i] = temp[i];
 		}

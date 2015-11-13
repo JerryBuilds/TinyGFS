@@ -1,6 +1,8 @@
 package com.client;
 
-public class RID {
+import java.io.Serializable;
+
+public class RID implements Serializable {
 	public String chunkhandle;
 	public int byteoffset;
 	public int size;

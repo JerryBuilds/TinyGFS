@@ -40,6 +40,13 @@ public class Master {
 	public static final int ReadNextRecordCMD = 213;
 	public static final int ReadPrevRecordCMD = 214;
 	
+	public static final int UP = 301;
+	public static final int DOWN = 302;
+	public static final int WRITTEN = 303;
+	public static final int UNWRITTEN = 304;
+	private boolean [] ChunkServerAvailability = {true};
+	public static int ChunkServerCount = 1; // TO BE CHANGED LATER
+	
 	private Tree namespace;
 	
 	public Master() {
@@ -48,6 +55,8 @@ public class Master {
 		DirectoryMD rootdir = new DirectoryMD();
 		rootdir.name = "";
 		namespace = new Tree(rootdir);
+		
+		
 		
 	}
 	
@@ -186,7 +195,7 @@ public class Master {
 		}
 		
 		ofh.FilePath = FilePath;
-		ofh.ChunkServerID = -1;
+		ofh.ChunkServerStatus = null;
 		
 		return FSReturnVals.Success;
 	}
@@ -200,7 +209,7 @@ public class Master {
 		
 		// set all parameters of FileHandle to null
 		ofh.FilePath = null;
-		ofh.ChunkServerID = -1;
+		ofh.ChunkServerStatus = null;
 		
 		return FSReturnVals.Success;
 	}
@@ -223,19 +232,45 @@ public class Master {
 		
 		
 		// Case 1: File has never been written to, or is empty
-		if (fmd.cs1info.isEmpty()) {
+		if (fmd.RecordIDInfo.isEmpty()) {
 			
 			// create new RID
 			RID newRid = new RID();
-			newRid.chunkhandle = ClientFS.chunkserver1.createChunk();
+			ChunkServer tempcs = ClientFS.chunkserver1;
+			newRid.chunkhandle = ClientFS.chunkserver1.createChunk(); // TO BE CHANGED LATER
 			newRid.byteoffset = 0;
 			newRid.size = size;
 			
+			// create new CSW (ChunkServerWritten)
+			for (int i=0; i < ChunkServerCount; i++) {
+				fmd.ChunkServerWritten.add(new ArrayList<Boolean>());
+			}
+			
 			// update metadata
-			fmd.cs1info.add(newRid);
+			fmd.RecordIDInfo.add(newRid);
+			for (int i=0; i < ChunkServerCount; i++) {
+				fmd.ChunkServerWritten.get(i).add(true); // TO BE CHANGED LATER
+				// When CS is networked with master,
+				// this value will start as UNWRITTEN
+				// and CS will use heartbeat to
+				// set it as WRITTEN
+			}
+			
 			
 			// update FH and RID
-			ofh.ChunkServerID = 1; // to be changed later
+			ofh.ChunkServerStatus = new int[ChunkServerCount];
+			for (int i=0; i < ChunkServerCount; i++) {
+				if (ChunkServerAvailability[i] == true) {
+					ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
+													// When CS is networked with master,
+													// this value will start as UNWRITTEN
+													// and CS will use heartbeat to
+													// set it as WRITTEN
+				}
+				else {
+					ofh.ChunkServerStatus[i] = DOWN;
+				}
+			}
 			RecordID.chunkhandle = newRid.chunkhandle;
 			RecordID.byteoffset = newRid.byteoffset;
 			RecordID.size = size;
@@ -246,7 +281,7 @@ public class Master {
 		else {
 			
 			// calculate space left in current chunk
-			RID tailRid = fmd.cs1info.getLast();
+			RID tailRid = fmd.RecordIDInfo.getLast();
 			int spaceleft = ChunkServer.ChunkSize - tailRid.byteoffset - tailRid.size;
 			
 
@@ -255,20 +290,41 @@ public class Master {
 				
 				// create new RID
 				RID newRid = new RID();
-				newRid.chunkhandle = ClientFS.chunkserver1.createChunk();
+				newRid.chunkhandle = ClientFS.chunkserver1.createChunk(); // TO BE CHANGED LATER
 				newRid.byteoffset = 0;
 				newRid.size = size;
 				
 				// update metadata
-				fmd.cs1info.add(newRid);
+				fmd.RecordIDInfo.add(newRid);
+				for (int i=0; i < ChunkServerCount; i++) {
+					fmd.ChunkServerWritten.get(i).add(true); // TO BE CHANGED LATER
+					// When CS is networked with master,
+					// this value will start as UNWRITTEN
+					// and CS will use heartbeat to
+					// set it as WRITTEN
+				}
 				
 				// update FH and RID
-				ofh.ChunkServerID = 1; // to be changed later
+				ofh.ChunkServerStatus = new int[ChunkServerCount];
+				for (int i=0; i < ChunkServerCount; i++) {
+					if (ChunkServerAvailability[i] == true) {
+						ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
+						// When CS is networked with master,
+						// this value will start as UNWRITTEN
+						// and CS will use heartbeat to
+						// set it as WRITTEN
+					}
+					else {
+						ofh.ChunkServerStatus[i] = DOWN;
+					}
+				}
 				RecordID.chunkhandle = newRid.chunkhandle;
 				RecordID.byteoffset = newRid.byteoffset;
 				RecordID.size = size;
 				
 			}
+			
+			// Case 2b: Chunk still has enough room for the record
 			else {
 				
 				// create new RID
@@ -278,10 +334,29 @@ public class Master {
 				newRid.size = size;
 				
 				// update metadata
-				fmd.cs1info.add(newRid);
+				fmd.RecordIDInfo.add(newRid);
+				for (int i=0; i < ChunkServerCount; i++) {
+					fmd.ChunkServerWritten.get(i).add(true); // TO BE CHANGED LATER
+					// When CS is networked with master,
+					// this value will start as UNWRITTEN
+					// and CS will use heartbeat to
+					// set it as WRITTEN
+				}
 				
 				// update FH and RID
-				ofh.ChunkServerID = 1; // to be changed later
+				ofh.ChunkServerStatus = new int[ChunkServerCount];
+				for (int i=0; i < ChunkServerCount; i++) {
+					if (ChunkServerAvailability[i] == true) {
+						ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
+						// When CS is networked with master,
+						// this value will start as UNWRITTEN
+						// and CS will use heartbeat to
+						// set it as WRITTEN
+					}
+					else {
+						ofh.ChunkServerStatus[i] = DOWN;
+					}
+				}
 				RecordID.chunkhandle = newRid.chunkhandle;
 				RecordID.byteoffset = newRid.byteoffset;
 				RecordID.size = size;
@@ -303,12 +378,12 @@ public class Master {
 		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
-		if (fmd.cs1info.isEmpty()) {
+		if (fmd.RecordIDInfo.isEmpty()) {
 			return FSReturnVals.RecDoesNotExist;
 		}
 		
 		// find index
-		int removeIndex = IndexOf(fmd.cs1info, RecordID);
+		int removeIndex = IndexOf(fmd.RecordIDInfo, RecordID);
 		
 		// if this record does not exist, return error
 		if (removeIndex == -1) {
@@ -316,7 +391,10 @@ public class Master {
 		}
 		
 		// remove this index
-		fmd.cs1info.remove(removeIndex);
+		fmd.RecordIDInfo.remove(removeIndex);
+		for (int i=0; i < ChunkServerCount; i++) {
+			fmd.ChunkServerWritten.get(i).remove(removeIndex);
+		}
 		
 		
 		return FSReturnVals.Success;
@@ -333,15 +411,28 @@ public class Master {
 		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
-		if (fmd.cs1info.isEmpty()) {
+		if (fmd.RecordIDInfo.isEmpty()) {
 			return FSReturnVals.RecDoesNotExist;
 		}
 		
 		// get first record from first chunk
-		RID firstRid = fmd.cs1info.peekFirst();
+		RID firstRid = fmd.RecordIDInfo.peekFirst();
 		
 		// update FH and RID
-		ofh.ChunkServerID = 1; // to be changed later
+		ofh.ChunkServerStatus = new int[ChunkServerCount];
+		for (int i=0; i < ChunkServerCount; i++) {
+			if (ChunkServerAvailability[i] == true) {
+				if (fmd.ChunkServerWritten.get(i).get(0) == true) {
+					ofh.ChunkServerStatus[i] = WRITTEN;
+				}
+				else {
+					ofh.ChunkServerStatus[i] = UNWRITTEN;
+				}
+			}
+			else {
+				ofh.ChunkServerStatus[i] = DOWN;
+			}
+		}
 		RecordID.chunkhandle = firstRid.chunkhandle;
 		RecordID.byteoffset = firstRid.byteoffset;
 		RecordID.size = firstRid.size;
@@ -361,15 +452,27 @@ public class Master {
 		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
-		if (fmd.cs1info.isEmpty()) {
+		if (fmd.RecordIDInfo.isEmpty()) {
 			return FSReturnVals.RecDoesNotExist;
 		}
 		
 		// get first record from first chunk
-		RID lastRid = fmd.cs1info.peekLast();
+		RID lastRid = fmd.RecordIDInfo.peekLast();
 		
 		// update FH and RID
-		ofh.ChunkServerID = 1; // to be changed later
+		for (int i=0; i < ChunkServerCount; i++) {
+			if (ChunkServerAvailability[i] == true) {
+				if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
+					ofh.ChunkServerStatus[i] = WRITTEN;
+				}
+				else {
+					ofh.ChunkServerStatus[i] = UNWRITTEN;
+				}
+			}
+			else {
+				ofh.ChunkServerStatus[i] = DOWN;
+			}
+		}
 		RecordID.chunkhandle = lastRid.chunkhandle;
 		RecordID.byteoffset = lastRid.byteoffset;
 		RecordID.size = lastRid.size;
@@ -389,43 +492,41 @@ public class Master {
 		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
-		if (fmd.cs1info == null) {
+		if (fmd.RecordIDInfo == null) {
 			return FSReturnVals.RecDoesNotExist;
 		}
 		
 		// check if this record is the last one
-		RID lastRid = fmd.cs1info.getLast();
+		RID lastRid = fmd.RecordIDInfo.getLast();
 		if (pivot.equals(lastRid)) {
 			RecordID = null;
 			return FSReturnVals.Fail;
 		}
 		
 		// get next record
-		int pivIndex = IndexOf(fmd.cs1info, pivot);
-		RID nextRid = fmd.cs1info.get(pivIndex+1);
+		int pivIndex = IndexOf(fmd.RecordIDInfo, pivot);
+		RID nextRid = fmd.RecordIDInfo.get(pivIndex+1);
 		
 		// update FH and RID
-		ofh.ChunkServerID = 1; // to be changed later
+		for (int i=0; i < ChunkServerCount; i++) {
+			if (ChunkServerAvailability[i] == true) {
+				if (fmd.ChunkServerWritten.get(i).get(pivIndex+1) == true) {
+					ofh.ChunkServerStatus[i] = WRITTEN;
+				}
+				else {
+					ofh.ChunkServerStatus[i] = UNWRITTEN;
+				}
+			}
+			else {
+				ofh.ChunkServerStatus[i] = DOWN;
+			}
+		}
 		RecordID.chunkhandle = nextRid.chunkhandle;
 		RecordID.byteoffset = nextRid.byteoffset;
 		RecordID.size = nextRid.size;
 		
 		
 		return FSReturnVals.Success;
-	}
-	
-	int IndexOf(LinkedList<RID> myll, RID myrid) {
-		int index = -1;
-		RID tempRid;
-		for (int i=0; i < myll.size(); i++) {
-			tempRid = myll.get(i);
-			if (tempRid.byteoffset == myrid.byteoffset
-					&& tempRid.chunkhandle.equals(myrid.chunkhandle)
-					&& tempRid.size == myrid.size) {
-				return i;
-			}
-		}
-		return index;
 	}
 	
 	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, RID RecordID) {
@@ -439,23 +540,35 @@ public class Master {
 		FileMD fmd = (FileMD) tempNode.GetData();
 		
 		// if file is empty, return error
-		if (fmd.cs1info == null) {
+		if (fmd.RecordIDInfo == null) {
 			return FSReturnVals.RecDoesNotExist;
 		}
 		
 		// check if this record is the last one
-		RID firstRid = fmd.cs1info.peekFirst();
+		RID firstRid = fmd.RecordIDInfo.peekFirst();
 		if (pivot.equals(firstRid)) {
 			RecordID = null;
 			return FSReturnVals.Fail;
 		}
 		
 		// get next record
-		int pivIndex = IndexOf(fmd.cs1info, pivot);
-		RID nextRid = fmd.cs1info.get(pivIndex-1);
+		int pivIndex = IndexOf(fmd.RecordIDInfo, pivot);
+		RID nextRid = fmd.RecordIDInfo.get(pivIndex-1);
 		
 		// update FH and RID
-		ofh.ChunkServerID = 1; // to be changed later
+		for (int i=0; i < ChunkServerCount; i++) {
+			if (ChunkServerAvailability[i] == true) {
+				if (fmd.ChunkServerWritten.get(i).get(pivIndex-1) == true) {
+					ofh.ChunkServerStatus[i] = WRITTEN;
+				}
+				else {
+					ofh.ChunkServerStatus[i] = UNWRITTEN;
+				}
+			}
+			else {
+				ofh.ChunkServerStatus[i] = DOWN;
+			}
+		}
 		RecordID.chunkhandle = nextRid.chunkhandle;
 		RecordID.byteoffset = nextRid.byteoffset;
 		RecordID.size = nextRid.size;
@@ -529,8 +642,12 @@ public class Master {
 		//Used for communication with the Client via the network
 		int ServerPort = 0; //Set to 0 to cause ServerSocket to allocate the port 
 		ServerSocket commChanel = null;
-		DataOutputStream WriteOutput = null;
-		DataInputStream ReadInput = null;
+//		DataOutputStream WriteOutput = null;
+//		DataInputStream ReadInput = null;
+//		ObjectOutputStream ObjectWriteOutput = null;
+//		ObjectInputStream ObjectReadInput = null;
+		ObjectOutputStream WriteOutput = null;
+		ObjectInputStream ReadInput = null;
 		
 		try {
 			//Allocate a port and write it to the config file for the Client to consume
@@ -547,7 +664,10 @@ public class Master {
 //		boolean done = false;
 		Socket ClientConnection = null;  //A client's connection to the server
 		
-		String src, dirname, NewName, tgtdir, filename;
+		String src, dirname, NewName, tgtdir, filename, FilePath;
+		FileHandle ofh;
+		RID RecordID;
+		int size;
 		ClientFS.FSReturnVals retval;
 		String converted;
 
@@ -555,8 +675,12 @@ public class Master {
 			try {
 				System.out.println("Waiting on incoming client connections...");
 				ClientConnection = commChanel.accept();
-				ReadInput = new DataInputStream(ClientConnection.getInputStream());
-				WriteOutput = new DataOutputStream(ClientConnection.getOutputStream());
+//				ReadInput = new DataInputStream(ClientConnection.getInputStream());
+//				WriteOutput = new DataOutputStream(ClientConnection.getOutputStream());
+//				ObjectReadInput = new ObjectInputStream(ClientConnection.getInputStream());
+//				ObjectWriteOutput = new ObjectOutputStream(ClientConnection.getOutputStream());
+				ReadInput = new ObjectInputStream(ClientConnection.getInputStream());
+				WriteOutput = new ObjectOutputStream(ClientConnection.getOutputStream());
 				
 				//Use the existing input and output stream as long as the client is connected
 				while (!ClientConnection.isClosed()) {
@@ -625,6 +749,13 @@ public class Master {
 						break;
 
 					case CreateFileCMD:
+						
+
+						if (ClientFS.chunkserver1 == null) {
+							System.out.println("cs is null in Master's CreateFile");
+						}
+						
+						
 						// read from client
 						tgtdir = ReadInput.readUTF();
 						filename = ReadInput.readUTF();
@@ -653,15 +784,67 @@ public class Master {
 						WriteOutput.flush();
 						
 						break;
+					
+					case OpenFileCMD:
+						// read from client
+						FilePath = ReadInput.readUTF();
+						ofh = (FileHandle) ReadInput.readObject();
 						
-//					case CreateChunkCMD:
-//						String chunkhandle = cs.createChunk();
-//						byte[] CHinbytes = chunkhandle.getBytes();
-//						WriteOutput.writeInt(ChunkServer.PayloadSZ + CHinbytes.length);
-//						WriteOutput.write(CHinbytes);
-//						WriteOutput.flush();
-//						break;
-
+						// execute on master
+						retval = this.OpenFile(FilePath, ofh);
+						
+						// return to client
+						WriteOutput.writeObject(ofh);
+						WriteOutput.flush();
+						
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						
+						break;
+					
+					case CloseFileCMD:
+						// read from client
+						ofh = (FileHandle) ReadInput.readObject();
+						
+						// execute on master
+						retval = this.CloseFile(ofh);
+						
+						// return to client
+						WriteOutput.writeObject(ofh);
+						WriteOutput.flush();
+						
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						
+						break;
+					
+					case AppendRecordCMD:
+						// read from client
+						ofh = (FileHandle) ReadInput.readObject();
+						RecordID = (RID) ReadInput.readObject();
+						size = ReadInput.readInt();
+						
+						// execute on master
+						retval = this.AppendRecord(ofh, RecordID, size);
+						
+						// return to client
+						WriteOutput.writeObject(ofh);
+						WriteOutput.flush();
+						WriteOutput.writeObject(RecordID);
+						WriteOutput.flush();
+						
+						converted = retval.name();
+						WriteOutput.writeUTF(converted);
+						WriteOutput.flush();
+						
+						
+						break;
+						
+						
 					default:
 						System.out.println("Error in Master, specified CMD "+CMD+" is not recognized.");
 						break;
@@ -669,6 +852,8 @@ public class Master {
 				}
 			} catch (IOException ex){
 				System.out.println("ClientFS Disconnected");
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
 			} finally {
 				try {
 					if (ClientConnection != null)
@@ -744,6 +929,23 @@ public class Master {
 		
 		return currentNode;
 	}
+	
+	
+	// this method is here because Java is stupid
+	int IndexOf(LinkedList<RID> myll, RID myrid) {
+		int index = -1;
+		RID tempRid;
+		for (int i=0; i < myll.size(); i++) {
+			tempRid = myll.get(i);
+			if (tempRid.byteoffset == myrid.byteoffset
+					&& tempRid.chunkhandle.equals(myrid.chunkhandle)
+					&& tempRid.size == myrid.size) {
+				return i;
+			}
+		}
+		return index;
+	}
+	
 	
 	public static void main(String [] args) {
 		Master ms = new Master();

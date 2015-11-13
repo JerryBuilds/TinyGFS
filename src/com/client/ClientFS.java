@@ -6,6 +6,8 @@ import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import com.chunkserver.ChunkServer;
@@ -33,16 +35,23 @@ public class ClientFS {
 	public static ChunkServer chunkserver1;
 	public static Client client;
 	
-	private static int MasterPort = 0;
-	private static Socket ClientMasterSocket;
-	private static DataOutputStream WriteOutput;
-	private static DataInputStream ReadInput; 
+	public static int MasterPort = 0;
+	public static Socket ClientMasterSocket;
+//	private static DataOutputStream WriteOutput;
+//	private static DataInputStream ReadInput; 
+//	private static ObjectOutputStream ObjectWriteOutput;
+//	private static ObjectInputStream ObjectReadInput;
+	public static ObjectOutputStream WriteOutput;
+	public static ObjectInputStream ReadInput;
 	
 	public ClientFS() {
-//		master = new Master();
+		master = new Master();
 		chunkserver1 = new ChunkServer();
+		if (chunkserver1 == null) {
+			System.out.println("cs is null in ClientFS constructor");
+		}
 		client = new Client();
-		InitializeMasterConnection();
+//		InitializeMasterConnection();
 	}
 	
 	public void InitializeMasterConnection() {
@@ -54,8 +63,14 @@ public class ClientFS {
 			MasterPort = Integer.parseInt(port);
 			
 			ClientMasterSocket = new Socket("127.0.0.1", MasterPort);
-			WriteOutput = new DataOutputStream(ClientMasterSocket.getOutputStream());
-			ReadInput = new DataInputStream(ClientMasterSocket.getInputStream());
+			WriteOutput = new ObjectOutputStream(ClientMasterSocket.getOutputStream());
+			ReadInput = new ObjectInputStream(ClientMasterSocket.getInputStream());
+//			WriteOutput = new DataOutputStream(ClientMasterSocket.getOutputStream());
+//			ReadInput = new DataInputStream(ClientMasterSocket.getInputStream());
+//			ObjectWriteOutput = new ObjectOutputStream(ClientMasterSocket.getOutputStream());
+//			ObjectReadInput = new ObjectInputStream(ClientMasterSocket.getInputStream());
+			
+			
 		}catch (FileNotFoundException e) {
 			System.out.println("Error (Client), the config file "+ Master.MasterClientConfigFile +" containing the port of the ChunkServer is missing.");
 		}catch (IOException e) {
@@ -73,7 +88,7 @@ public class ClientFS {
 	 * "CSCI485"), CreateDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals CreateDir(String src, String dirname) {
-		try {
+		/*try {
 			// send command
 			WriteOutput.writeInt(Master.CreateDirCMD);
 			
@@ -92,8 +107,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-//		return master.CreateDir(src, dirname);
-		return null;
+		return null;*/
+		return master.CreateDir(src, dirname);
 	}
 
 	/**
@@ -104,7 +119,7 @@ public class ClientFS {
 	 * Example usage: DeleteDir("/Shahram/CSCI485", "Lecture1")
 	 */
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		try {
+		/*try {
 			// send command
 			WriteOutput.writeInt(Master.DeleteDirCMD);
 			
@@ -123,8 +138,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-//		return master.DeleteDir(src, dirname);
-		return null;
+		return null;*/
+		return master.DeleteDir(src, dirname);
 	}
 
 	/**
@@ -136,7 +151,7 @@ public class ClientFS {
 	 * "/Shahram/CSCI485" to "/Shahram/CSCI550"
 	 */
 	public FSReturnVals RenameDir(String src, String NewName) {
-		try {
+		/*try {
 			// send command
 			WriteOutput.writeInt(Master.RenameDirCMD);
 			
@@ -155,8 +170,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-//		return master.RenameDir(src, NewName);
-		return null;
+		return null;*/
+		return master.RenameDir(src, NewName);
 	}
 
 	/**
@@ -167,7 +182,7 @@ public class ClientFS {
 	 * Example usage: ListDir("/Shahram/CSCI485")
 	 */
 	public String[] ListDir(String tgt) {
-		try {
+		/*try {
 			// send command
 			WriteOutput.writeInt(Master.ListDirCMD);
 			
@@ -188,8 +203,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-//		return master.ListDir(tgt);
-		return null;
+		return null;*/
+		return master.ListDir(tgt);
 	}
 
 	/**
@@ -200,7 +215,7 @@ public class ClientFS {
 	 * Example usage: Createfile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		try {
+		/*try {
 			// send command
 			WriteOutput.writeInt(Master.CreateFileCMD);
 			
@@ -219,8 +234,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
-//		return master.CreateFile(tgtdir, filename);
-		return null;
+		return null;*/
+		return master.CreateFile(tgtdir, filename);
 	}
 
 	/**
@@ -231,7 +246,7 @@ public class ClientFS {
 	 * Example usage: DeleteFile("/Shahram/CSCI485/Lecture1", "Intro.pptx")
 	 */
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		try {
+		/*try {
 			// send command
 			WriteOutput.writeInt(Master.DeleteFileCMD);
 			
@@ -250,8 +265,8 @@ public class ClientFS {
 			e.printStackTrace();
 		}
 		
+		return null;*/
 		return master.DeleteFile(tgtdir, filename);
-		//return null;
 	}
 
 	/**
@@ -262,8 +277,36 @@ public class ClientFS {
 	 * Example usage: OpenFile("/Shahram/CSCI485/Lecture1/Intro.pptx")
 	 */
 	public FSReturnVals OpenFile(String FilePath, FileHandle ofh) {
+		/*try {
+			// send command
+			WriteOutput.writeInt(Master.OpenFileCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(FilePath);
+			WriteOutput.writeObject(ofh);
+			WriteOutput.flush();
+
+			// retrieve response
+			FileHandle tempFH = (FileHandle) ReadInput.readObject();
+			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+			ofh.FilePath = tempFH.FilePath;
+			
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+		return null;*/
 		return master.OpenFile(FilePath, ofh);
-		//return null;
 	}
 
 	/**
@@ -272,8 +315,34 @@ public class ClientFS {
 	 * Example usage: CloseFile(FH1)
 	 */
 	public FSReturnVals CloseFile(FileHandle ofh) {
+		/*try {
+			// send command
+			WriteOutput.writeInt(Master.OpenFileCMD);
+			
+			// send arguments
+			WriteOutput.writeObject(ofh);
+			WriteOutput.flush();
+
+			// retrieve response
+			FileHandle tempFH = (FileHandle) ReadInput.readObject();
+			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+			ofh.FilePath = tempFH.FilePath;
+			
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		
+		return null;*/
 		return master.CloseFile(ofh);
-		//return null;
 	}
 
 }

@@ -26,6 +26,11 @@ public class ChunkServer implements ChunkServerInterface {
 	final static String filePath = "csci485/";	//or C:\\newfile.txt
 	public final static String ClientChunkServerConfigFile = "ClientChunkServerConfig.txt";
 	public final static String MasterChunkServerConfigFile = "MasterChunkServerConfig.txt";
+	public final static String [] ClientCSconfigFiles = {
+			"ClientCS1Config.txt",
+			"ClientCS2Config.txt",
+			"ClientCS3Config.txt"
+	};
 	public final static int ChunkSize = 1024 * 1024; //1024 KB chunk sizes
 	
 	//Used for the file system
