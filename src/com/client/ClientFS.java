@@ -51,7 +51,7 @@ public class ClientFS {
 //			System.out.println("cs is null in ClientFS constructor");
 //		}
 		client = new Client();
-//		InitializeMasterConnection();
+		InitializeMasterConnection();
 	}
 	
 	public void InitializeMasterConnection() {
@@ -65,10 +65,6 @@ public class ClientFS {
 			ClientMasterSocket = new Socket("127.0.0.1", MasterPort);
 			WriteOutput = new ObjectOutputStream(ClientMasterSocket.getOutputStream());
 			ReadInput = new ObjectInputStream(ClientMasterSocket.getInputStream());
-//			WriteOutput = new DataOutputStream(ClientMasterSocket.getOutputStream());
-//			ReadInput = new DataInputStream(ClientMasterSocket.getInputStream());
-//			ObjectWriteOutput = new ObjectOutputStream(ClientMasterSocket.getOutputStream());
-//			ObjectReadInput = new ObjectInputStream(ClientMasterSocket.getInputStream());
 			
 			
 		}catch (FileNotFoundException e) {
@@ -88,27 +84,27 @@ public class ClientFS {
 	 * "CSCI485"), CreateDir("/Shahram/CSCI485/", "Lecture1")
 	 */
 	public FSReturnVals CreateDir(String src, String dirname) {
-//		try {
-//			// send command
-//			WriteOutput.writeInt(Master.CreateDirCMD);
-//			
-//			// send arguments
-//			WriteOutput.writeUTF(src);
-//			WriteOutput.writeUTF(dirname);
-//			WriteOutput.flush();
-//			
-//			// retrieve response
-//			String retval = ReadInput.readUTF();
-//			FSReturnVals converted = FSReturnVals.valueOf(retval);
-//			
-//			return converted;
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		return null;
-		return master.CreateDir(src, dirname);
+		try {
+			// send command
+			WriteOutput.writeInt(Master.CreateDirCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(src);
+			WriteOutput.writeUTF(dirname);
+			WriteOutput.flush();
+			
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+//		return master.CreateDir(src, dirname);
 	}
 
 	/**
@@ -119,27 +115,27 @@ public class ClientFS {
 	 * Example usage: DeleteDir("/Shahram/CSCI485/", "Lecture1")
 	 */
 	public FSReturnVals DeleteDir(String src, String dirname) {
-//		try {
-//			// send command
-//			WriteOutput.writeInt(Master.DeleteDirCMD);
-//			
-//			// send arguments
-//			WriteOutput.writeUTF(src);
-//			WriteOutput.writeUTF(dirname);
-//			WriteOutput.flush();
-//
-//			// retrieve response
-//			String retval = ReadInput.readUTF();
-//			FSReturnVals converted = FSReturnVals.valueOf(retval);
-//			
-//			return converted;
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		return null;
-		return master.DeleteDir(src, dirname);
+		try {
+			// send command
+			WriteOutput.writeInt(Master.DeleteDirCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(src);
+			WriteOutput.writeUTF(dirname);
+			WriteOutput.flush();
+
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+//		return master.DeleteDir(src, dirname);
 	}
 
 	/**
@@ -151,27 +147,27 @@ public class ClientFS {
 	 * "/Shahram/CSCI485" to "/Shahram/CSCI550"
 	 */
 	public FSReturnVals RenameDir(String src, String NewName) {
-//		try {
-//			// send command
-//			WriteOutput.writeInt(Master.RenameDirCMD);
-//			
-//			// send arguments
-//			WriteOutput.writeUTF(src);
-//			WriteOutput.writeUTF(NewName);
-//			WriteOutput.flush();
-//
-//			// retrieve response
-//			String retval = ReadInput.readUTF();
-//			FSReturnVals converted = FSReturnVals.valueOf(retval);
-//			
-//			return converted;
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		return null;
-		return master.RenameDir(src, NewName);
+		try {
+			// send command
+			WriteOutput.writeInt(Master.RenameDirCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(src);
+			WriteOutput.writeUTF(NewName);
+			WriteOutput.flush();
+
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+//		return master.RenameDir(src, NewName);
 	}
 
 	/**
@@ -182,29 +178,29 @@ public class ClientFS {
 	 * Example usage: ListDir("/Shahram/CSCI485")
 	 */
 	public String[] ListDir(String tgt) {
-//		try {
-//			// send command
-//			WriteOutput.writeInt(Master.ListDirCMD);
-//			
-//			// send argument
-//			WriteOutput.writeUTF(tgt);
-//			WriteOutput.flush();
-//			
-//			// retrieve response
-//			int lsSize = ReadInput.readInt();
-//			String [] retval = new String[lsSize];
-//			for (int i=0; i < lsSize; i++) {
-//				retval[i] = ReadInput.readUTF();
-//			}
-//			
-//			return retval;
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		return null;
-		return master.ListDir(tgt);
+		try {
+			// send command
+			WriteOutput.writeInt(Master.ListDirCMD);
+			
+			// send argument
+			WriteOutput.writeUTF(tgt);
+			WriteOutput.flush();
+			
+			// retrieve response
+			int lsSize = ReadInput.readInt();
+			String [] retval = new String[lsSize];
+			for (int i=0; i < lsSize; i++) {
+				retval[i] = ReadInput.readUTF();
+			}
+			
+			return retval;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+//		return master.ListDir(tgt);
 	}
 
 	/**
@@ -215,27 +211,27 @@ public class ClientFS {
 	 * Example usage: Createfile("/Shahram/CSCI485/Lecture1/", "Intro.pptx")
 	 */
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-//		try {
-//			// send command
-//			WriteOutput.writeInt(Master.CreateFileCMD);
-//			
-//			// send arguments
-//			WriteOutput.writeUTF(tgtdir);
-//			WriteOutput.writeUTF(filename);
-//			WriteOutput.flush();
-//
-//			// retrieve response
-//			String retval = ReadInput.readUTF();
-//			FSReturnVals converted = FSReturnVals.valueOf(retval);
-//			
-//			return converted;
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		return null;
-		return master.CreateFile(tgtdir, filename);
+		try {
+			// send command
+			WriteOutput.writeInt(Master.CreateFileCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(tgtdir);
+			WriteOutput.writeUTF(filename);
+			WriteOutput.flush();
+
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+//		return master.CreateFile(tgtdir, filename);
 	}
 
 	/**
@@ -246,27 +242,27 @@ public class ClientFS {
 	 * Example usage: DeleteFile("/Shahram/CSCI485/Lecture1/", "Intro.pptx")
 	 */
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-//		try {
-//			// send command
-//			WriteOutput.writeInt(Master.DeleteFileCMD);
-//			
-//			// send arguments
-//			WriteOutput.writeUTF(tgtdir);
-//			WriteOutput.writeUTF(filename);
-//			WriteOutput.flush();
-//
-//			// retrieve response
-//			String retval = ReadInput.readUTF();
-//			FSReturnVals converted = FSReturnVals.valueOf(retval);
-//			
-//			return converted;
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		return null;
-		return master.DeleteFile(tgtdir, filename);
+		try {
+			// send command
+			WriteOutput.writeInt(Master.DeleteFileCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(tgtdir);
+			WriteOutput.writeUTF(filename);
+			WriteOutput.flush();
+
+			// retrieve response
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+//		return master.DeleteFile(tgtdir, filename);
 	}
 
 	/**
@@ -277,36 +273,36 @@ public class ClientFS {
 	 * Example usage: OpenFile("/Shahram/CSCI485/Lecture1/Intro.pptx")
 	 */
 	public FSReturnVals OpenFile(String FilePath, FileHandle ofh) {
-//		try {
-//			// send command
-//			WriteOutput.writeInt(Master.OpenFileCMD);
-//			
-//			// send arguments
-//			WriteOutput.writeUTF(FilePath);
-//			WriteOutput.writeObject(ofh);
-//			WriteOutput.flush();
-//
-//			// retrieve response
-//			FileHandle tempFH = (FileHandle) ReadInput.readObject();
-//			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
-//			ofh.FilePath = tempFH.FilePath;
-//			
-//			String retval = ReadInput.readUTF();
-//			FSReturnVals converted = FSReturnVals.valueOf(retval);
-//			
-//			
-//			return converted;
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		} catch (ClassNotFoundException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		
-//		
-//		return null;
-		return master.OpenFile(FilePath, ofh);
+		try {
+			// send command
+			WriteOutput.writeInt(Master.OpenFileCMD);
+			
+			// send arguments
+			WriteOutput.writeUTF(FilePath);
+			WriteOutput.writeObject(ofh);
+			WriteOutput.flush();
+
+			// retrieve response
+			FileHandle tempFH = (FileHandle) ReadInput.readObject();
+			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+			ofh.FilePath = tempFH.FilePath;
+			
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+		return null;
+//		return master.OpenFile(FilePath, ofh);
 	}
 
 	/**
@@ -315,34 +311,34 @@ public class ClientFS {
 	 * Example usage: CloseFile(FH1)
 	 */
 	public FSReturnVals CloseFile(FileHandle ofh) {
-//		try {
-//			// send command
-//			WriteOutput.writeInt(Master.CloseFileCMD);
-//			
-//			// send arguments
-//			WriteOutput.writeObject(ofh);
-//			WriteOutput.flush();
-//
-//			// retrieve response
-//			FileHandle tempFH = (FileHandle) ReadInput.readObject();
-//			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
-//			ofh.FilePath = tempFH.FilePath;
-//			
-//			String retval = ReadInput.readUTF();
-//			FSReturnVals converted = FSReturnVals.valueOf(retval);
-//			
-//			
-//			return converted;
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		} catch (ClassNotFoundException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		
-//		return null;
-		return master.CloseFile(ofh);
+		try {
+			// send command
+			WriteOutput.writeInt(Master.CloseFileCMD);
+			
+			// send arguments
+			WriteOutput.writeObject(ofh);
+			WriteOutput.flush();
+
+			// retrieve response
+			FileHandle tempFH = (FileHandle) ReadInput.readObject();
+			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+			ofh.FilePath = tempFH.FilePath;
+			
+			String retval = ReadInput.readUTF();
+			FSReturnVals converted = FSReturnVals.valueOf(retval);
+			
+			
+			return converted;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		
+		return null;
+//		return master.CloseFile(ofh);
 	}
 
 }

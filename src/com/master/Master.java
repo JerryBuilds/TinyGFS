@@ -676,7 +676,7 @@ public class Master {
 		
 		String src, dirname, NewName, tgtdir, filename, FilePath;
 		FileHandle ofh;
-		RID RecordID, pivot;
+		RID tempRID, pivot;
 		int size;
 		ClientFS.FSReturnVals retval;
 		String converted;
@@ -759,13 +759,6 @@ public class Master {
 						break;
 
 					case CreateFileCMD:
-						
-
-						if (ClientFS.chunkserver1 == null) {
-							System.out.println("cs is null in Master's CreateFile");
-						}
-						
-						
 						// read from client
 						tgtdir = ReadInput.readUTF();
 						filename = ReadInput.readUTF();
@@ -835,16 +828,16 @@ public class Master {
 					case AppendRecordCMD:
 						// read from client
 						ofh = (FileHandle) ReadInput.readObject();
-						RecordID = (RID) ReadInput.readObject();
+						tempRID = (RID) ReadInput.readObject();
 						size = ReadInput.readInt();
 						
 						// execute on master
-						retval = this.AppendRecord(ofh, RecordID, size);
+						retval = this.AppendRecord(ofh, tempRID, size);
 						
 						// return to client
 						WriteOutput.writeObject(ofh);
 						WriteOutput.flush();
-						WriteOutput.writeObject(RecordID);
+						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
 						converted = retval.name();
@@ -857,15 +850,15 @@ public class Master {
 					case DeleteRecordCMD:
 						// read from client
 						ofh = (FileHandle) ReadInput.readObject();
-						RecordID = (RID) ReadInput.readObject();
+						tempRID = (RID) ReadInput.readObject();
 						
 						// execute on master
-						retval = this.DeleteRecord(ofh, RecordID);
+						retval = this.DeleteRecord(ofh, tempRID);
 						
 						// return to client
 						WriteOutput.writeObject(ofh);
 						WriteOutput.flush();
-						WriteOutput.writeObject(RecordID);
+						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
 						converted = retval.name();
@@ -878,15 +871,15 @@ public class Master {
 					case ReadFirstRecordCMD:
 						// read from client
 						ofh = (FileHandle) ReadInput.readObject();
-						RecordID = (RID) ReadInput.readObject();
+						tempRID = new RID();
 						
 						// execute on master
-						retval = this.ReadFirstRecord(ofh, RecordID);
+						retval = this.ReadFirstRecord(ofh, tempRID);
 						
 						// return to client
 						WriteOutput.writeObject(ofh);
 						WriteOutput.flush();
-						WriteOutput.writeObject(RecordID);
+						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
 						converted = retval.name();
@@ -899,15 +892,15 @@ public class Master {
 					case ReadLastRecordCMD:
 						// read from client
 						ofh = (FileHandle) ReadInput.readObject();
-						RecordID = (RID) ReadInput.readObject();
+						tempRID = new RID();
 						
 						// execute on master
-						retval = this.ReadLastRecord(ofh, RecordID);
+						retval = this.ReadLastRecord(ofh, tempRID);
 						
 						// return to client
 						WriteOutput.writeObject(ofh);
 						WriteOutput.flush();
-						WriteOutput.writeObject(RecordID);
+						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
 						converted = retval.name();
@@ -921,15 +914,15 @@ public class Master {
 						// read from client
 						ofh = (FileHandle) ReadInput.readObject();
 						pivot = (RID) ReadInput.readObject();
-						RecordID = (RID) ReadInput.readObject();
+						tempRID = new RID();
 						
 						// execute on master
-						retval = this.ReadNextRecord(ofh, pivot, RecordID);
+						retval = this.ReadNextRecord(ofh, pivot, tempRID);
 						
 						// return to client
 						WriteOutput.writeObject(ofh);
 						WriteOutput.flush();
-						WriteOutput.writeObject(RecordID);
+						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
 						converted = retval.name();
@@ -943,15 +936,15 @@ public class Master {
 						// read from client
 						ofh = (FileHandle) ReadInput.readObject();
 						pivot = (RID) ReadInput.readObject();
-						RecordID = (RID) ReadInput.readObject();
+						tempRID = new RID();
 						
 						// execute on master
-						retval = this.ReadPrevRecord(ofh, pivot, RecordID);
+						retval = this.ReadPrevRecord(ofh, pivot, tempRID);
 						
 						// return to client
 						WriteOutput.writeObject(ofh);
 						WriteOutput.flush();
-						WriteOutput.writeObject(RecordID);
+						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
 						converted = retval.name();
