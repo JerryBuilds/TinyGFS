@@ -58,7 +58,7 @@ public class UnitTest5 {
 		FSReturnVals retRR = crec.ReadLastRecord(fh, r1);
 		int cntr = 1;
 		ArrayList<RID> vect = new ArrayList<RID>();
-		while (r1 != null){
+		while (r1.getRID() != null){
 			TinyRec r2 = new TinyRec();
 			FSReturnVals retval = crec.ReadPrevRecord(fh, r1.getRID(), r2);
 			if(r2.getRID() != null){
@@ -72,7 +72,7 @@ public class UnitTest5 {
 				r1 = r2;
 				cntr++;
 			}else{
-				r1 = null;
+				r1.setRID(null);
 			}
 		}
 		//Iterate the vector and delete the RIDs stored in it
@@ -93,7 +93,7 @@ public class UnitTest5 {
 		ofd = cfs.OpenFile("/" + dir1 + "/emp1", fh);
 		r1 = new TinyRec();
 		retRR = crec.ReadLastRecord(fh, r1);
-		while (r1 != null){
+		while (r1.getRID() != null){
 			TinyRec r2 = new TinyRec();
 			FSReturnVals retval = crec.ReadPrevRecord(fh, r1.getRID(), r2);
 			if(r2.getRID() != null){
@@ -107,7 +107,7 @@ public class UnitTest5 {
 				}
 				r1 = r2;
 			}else{
-				r1 = null;
+				r1.setRID(null);
 			}
 		}
 		fsrv = cfs.CloseFile(fh);

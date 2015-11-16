@@ -113,7 +113,7 @@ public class UnitTest6 {
 		FSReturnVals retImg1 = crec.ReadFirstRecord(ImageFH, img1);
 		TinyRec name1 = new TinyRec();
 		FSReturnVals retName1 = crec.ReadFirstRecord(NameFH, name1);
-		if(img1 == null || name1 == null){
+		if(img1.getRID() == null || name1.getRID() == null){
 			System.out.println("Error in UnitTest6:  Failed to read the first record");
 			return;
 		}

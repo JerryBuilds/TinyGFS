@@ -59,7 +59,7 @@ public class UnitTest4 {
 		FSReturnVals retRR = crec.ReadFirstRecord(fh, r1);
 		int cntr = 1;
 		ArrayList<RID> vect = new ArrayList<RID>();
-		while (r1 != null){
+		while (r1.getRID() != null){
 			TinyRec r2 = new TinyRec();
 			FSReturnVals retval = crec.ReadNextRecord(fh, r1.getRID(), r2);
 			//if(retval != FSReturnVals.Success){
@@ -76,12 +76,12 @@ public class UnitTest4 {
 				r1 = r2;
 				cntr++;
 			} else {
-				r1 = null;
+				r1.setRID(null);
 			}
 				
 		}
 		
-		System.out.println(TestName + "Delete the even numbered records using their first four bytes.");
+		System.out.println(TestName + "Delete the odd numbered records using their first four bytes.");
 		//Iterate the vector and delete the RIDs stored in it
 		for(int i = 0; i < vect.size(); i++){
 			fsrv = crec.DeleteRecord(fh, vect.get(i));
@@ -97,11 +97,11 @@ public class UnitTest4 {
     		return;
 		}
 		
-		System.out.println(TestName + "Scan the file and verify there are only odd numbered records using their first four bytes.");
+		System.out.println(TestName + "Scan the file and verify there are only even numbered records using their first four bytes.");
 		ofd = cfs.OpenFile("/" + dir1 + "/emp", fh);
 		r1 = new TinyRec();
 		retRR = crec.ReadFirstRecord(fh, r1);
-		while (r1 != null){
+		while (r1.getRID() != null){
 			TinyRec r2 = new TinyRec();
 			FSReturnVals retval = crec.ReadNextRecord(fh, r1.getRID(), r2);
 			if(r2.getRID() != null){
@@ -110,12 +110,12 @@ public class UnitTest4 {
 				int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
 				        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
 				if(value % 2 != 0){
-					System.out.println("Unit test 4 result: fail!  Found an even numbered record with value " + value + ".");
+					System.out.println("Unit test 4 result: fail!  Found an odd numbered record with value " + value + ".");
 		    		return;
 				}
 				r1 = r2;
 			}else{
-				r1 = null;
+				r1.setRID(null);
 			}
 		}
 		fsrv = cfs.CloseFile(fh);
