@@ -4,10 +4,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import com.client.ClientFS;
+import com.client.ClientFS.FSReturnVals;
 import com.client.ClientRec;
 import com.client.FileHandle;
 import com.client.RID;
-import com.client.ClientFS.FSReturnVals;
+import com.client.TinyRec;
 
 /**
  * UnitTest5 for Part 3 of TinyFS
@@ -46,30 +47,33 @@ public class UnitTest5 {
 			System.arraycopy(ValInBytes, 0, payload, 0, intSize);
 			for(int j = 4; j < 104; j++){
 				//payload[j] = (char)(i % 26 + 65);
-				payload[j] = 0;
+				payload[j] = 'b';
 			}
 			RID rid = new RID();
 			crec.AppendRecord(fh, payload, rid);
 		}
 		fsrv = cfs.CloseFile(fh);
 		ofd = cfs.OpenFile("/" + dir1 + "/emp1", fh);
-		RID r1 = new RID();
-		FSReturnVals RID1 = crec.ReadLastRecord(fh, payload, r1);
+		TinyRec r1 = new TinyRec();
+		FSReturnVals retRR = crec.ReadLastRecord(fh, r1);
 		int cntr = 0;
 		ArrayList<RID> vect = new ArrayList<RID>();
-		FSReturnVals RID2 = FSReturnVals.Success;
-		while (RID2 == FSReturnVals.Success){
-			RID r2 = new RID();
-			RID2 = crec.ReadPrevRecord(fh, r1, payload, r2);
-			byte[] head = new byte[4];
-			System.arraycopy(payload, 0, head, 0, 4);
-			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
-			        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
-			if(value % 2 != 0 && RID2 == FSReturnVals.Success){
-				vect.add(r2);
+		while (r1 != null){
+			TinyRec r2 = new TinyRec();
+			FSReturnVals retval = crec.ReadPrevRecord(fh, r1.getRID(), r2);
+			if(r2.getRID() != null){
+				byte[] head = new byte[4];
+				System.arraycopy(r2.getPayload(), 0, head, 0, 4);
+				int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
+				        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
+				if(value % 2 == 0){
+					vect.add(r2.getRID());
+				}
+				r1 = r2;
+				cntr++;
+			}else{
+				r1 = null;
 			}
-			r1 = r2;
-			cntr++;
 		}
 		//Iterate the vector and delete the RIDs stored in it
 		for(int i = 0; i < vect.size(); i++){
@@ -87,21 +91,24 @@ public class UnitTest5 {
 		}
 		
 		ofd = cfs.OpenFile("/" + dir1 + "/emp1", fh);
-		r1 = new RID();
-		RID1 = crec.ReadLastRecord(fh, payload, r1);
-		while (RID1 != FSReturnVals.Fail){
-			RID r2 = new RID();
-			RID2 = crec.ReadPrevRecord(fh, r1, payload, r2);
-			byte[] head = new byte[4];
-			System.arraycopy(payload, 0, head, 0, 4);
-			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
-			        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
-			if(value % 2 != 0 && RID2 == FSReturnVals.Success){
-				System.out.println("Unit test 5 result: fail!  Found an even numbered record with value " + value + ".");
-	    		return;
+		r1 = new TinyRec();
+		retRR = crec.ReadLastRecord(fh, r1);
+		while (r1 != null){
+			TinyRec r2 = new TinyRec();
+			FSReturnVals retval = crec.ReadPrevRecord(fh, r1.getRID(), r2);
+			if(r2.getRID() != null){
+				byte[] head = new byte[4];
+				System.arraycopy(r2.getPayload(), 0, head, 0, 4);
+				int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
+				        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
+				if(value % 2 == 0){
+					System.out.println("Unit test 5 result: fail!  Found an even numbered record with value " + value + ".");
+		    		return;
+				}
+				r1 = r2;
+			}else{
+				r1 = null;
 			}
-			r1 = r2;
-			RID1 = RID2;
 		}
 		fsrv = cfs.CloseFile(fh);
 		System.out.println(TestName + "Success!");

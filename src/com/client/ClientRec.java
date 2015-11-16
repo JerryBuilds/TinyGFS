@@ -17,54 +17,54 @@ public class ClientRec {
 	 */
 	public FSReturnVals AppendRecord(FileHandle ofh, byte[] payload, RID RecordID) {
 		
-		FSReturnVals converted = null;
-		
-		try {
-			// send command
-			ClientFS.WriteOutput.writeInt(Master.AppendRecordCMD);
-			
-			// send arguments
-			ClientFS.WriteOutput.writeObject(ofh);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeObject(RecordID);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeInt(payload.length);
-			ClientFS.WriteOutput.flush();
-
-			// retrieve response
-			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
-			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
-			ofh.FilePath = tempFH.FilePath;
-			
-			RID tempRID = (RID) ClientFS.ReadInput.readObject();
-			RecordID.chunkhandle = tempRID.chunkhandle;
-			RecordID.byteoffset = tempRID.byteoffset;
-			RecordID.size = tempRID.size;
-			
-			String retval = ClientFS.ReadInput.readUTF();
-			converted = FSReturnVals.valueOf(retval);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		
-		// request info from master
-		if (converted != FSReturnVals.Success) {
-			return converted;
-		}
-		
-		
-//		FSReturnVals retval = ClientFS.master.AppendRecord(ofh, RecordID, payload.length);
-//		if (retval != FSReturnVals.Success) {
-//			return retval;
+//		FSReturnVals converted = null;
+//		
+//		try {
+//			// send command
+//			ClientFS.WriteOutput.writeInt(Master.AppendRecordCMD);
+//			
+//			// send arguments
+//			ClientFS.WriteOutput.writeObject(ofh);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeObject(RecordID);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeInt(payload.length);
+//			ClientFS.WriteOutput.flush();
+//
+//			// retrieve response
+//			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
+//			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+//			ofh.FilePath = tempFH.FilePath;
+//			
+//			RID tempRID = (RID) ClientFS.ReadInput.readObject();
+//			RecordID.chunkhandle = tempRID.chunkhandle;
+//			RecordID.byteoffset = tempRID.byteoffset;
+//			RecordID.size = tempRID.size;
+//			
+//			String retval = ClientFS.ReadInput.readUTF();
+//			converted = FSReturnVals.valueOf(retval);
+//			
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		
+//		// request info from master
+//		if (converted != FSReturnVals.Success) {
+//			return converted;
 //		}
 		
+		
+		FSReturnVals retval = ClientFS.master.AppendRecord(ofh, RecordID, payload.length);
+		if (retval != FSReturnVals.Success) {
+			return retval;
+		}
+		
 		// write to chunkserver
-//		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
-		ClientFS.client.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
+		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
+//		ClientFS.client.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
 		
 		return FSReturnVals.Success;
 	}
@@ -79,105 +79,108 @@ public class ClientRec {
 	 */
 	public FSReturnVals DeleteRecord(FileHandle ofh, RID RecordID) {
 		
-		FSReturnVals converted = null;
+//		FSReturnVals converted = null;
+//		
+//		try {
+//			// send command
+//			ClientFS.WriteOutput.writeInt(Master.DeleteRecordCMD);
+//			
+//			// send arguments
+//			ClientFS.WriteOutput.writeObject(ofh);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeObject(RecordID);
+//			ClientFS.WriteOutput.flush();
+//
+//			// retrieve response
+//			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
+//			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+//			ofh.FilePath = tempFH.FilePath;
+//			
+//			RID tempRID = (RID) ClientFS.ReadInput.readObject();
+//			RecordID.chunkhandle = tempRID.chunkhandle;
+//			RecordID.byteoffset = tempRID.byteoffset;
+//			RecordID.size = tempRID.size;
+//			
+//			String retval = ClientFS.ReadInput.readUTF();
+//			converted = FSReturnVals.valueOf(retval);
+//			
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		
+//		// request info from master
+//		if (converted != FSReturnVals.Success) {
+//			return converted;
+//		}
+//		
+//		return FSReturnVals.Success;
 		
-		try {
-			// send command
-			ClientFS.WriteOutput.writeInt(Master.DeleteRecordCMD);
-			
-			// send arguments
-			ClientFS.WriteOutput.writeObject(ofh);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeObject(RecordID);
-			ClientFS.WriteOutput.flush();
-
-			// retrieve response
-			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
-			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
-			ofh.FilePath = tempFH.FilePath;
-			
-			RID tempRID = (RID) ClientFS.ReadInput.readObject();
-			RecordID.chunkhandle = tempRID.chunkhandle;
-			RecordID.byteoffset = tempRID.byteoffset;
-			RecordID.size = tempRID.size;
-			
-			String retval = ClientFS.ReadInput.readUTF();
-			converted = FSReturnVals.valueOf(retval);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		
-		// request info from master
-		if (converted != FSReturnVals.Success) {
-			return converted;
-		}
-		
-		return FSReturnVals.Success;
-		
-//		return ClientFS.master.DeleteRecord(ofh, RecordID);
+		return ClientFS.master.DeleteRecord(ofh, RecordID);
 	}
 
 	/**
 	 * Reads the first record of the file specified by ofh into payload Returns
 	 * BadHandle if ofh is invalid Returns RecDoesNotExist if the file is empty
 	 *
-	 * Example usage: ReadFirstRecord(FH1, rec, recid)
+	 * Example usage: ReadFirstRecord(FH1, RecID1)
 	 */
-	public FSReturnVals ReadFirstRecord(FileHandle ofh, byte[] payload, RID RecordID) {
+	public FSReturnVals ReadFirstRecord(FileHandle ofh, TinyRec rec) {
 		
-		FSReturnVals converted = null;
-		
-		try {
-			// send command
-			ClientFS.WriteOutput.writeInt(Master.ReadFirstRecordCMD);
-			
-			// send arguments
-			ClientFS.WriteOutput.writeObject(ofh);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeObject(RecordID);
-			ClientFS.WriteOutput.flush();
-
-			// retrieve response
-			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
-			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
-			ofh.FilePath = tempFH.FilePath;
-			
-			RID tempRID = (RID) ClientFS.ReadInput.readObject();
-			RecordID.chunkhandle = tempRID.chunkhandle;
-			RecordID.byteoffset = tempRID.byteoffset;
-			RecordID.size = tempRID.size;
-			
-			String retval = ClientFS.ReadInput.readUTF();
-			converted = FSReturnVals.valueOf(retval);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		
-		// request info from master
-		if (converted != FSReturnVals.Success) {
-			return converted;
-		}
-		
-		// request info from master
-//		FSReturnVals retval = ClientFS.master.ReadFirstRecord(ofh, RecordID);
-//		if (retval != FSReturnVals.Success) {
-//			return retval;
+//		FSReturnVals converted = null;
+//		
+//		try {
+//			// send command
+//			ClientFS.WriteOutput.writeInt(Master.ReadFirstRecordCMD);
+//			
+//			// send arguments
+//			ClientFS.WriteOutput.writeObject(ofh);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeObject(RecordID);
+//			ClientFS.WriteOutput.flush();
+//
+//			// retrieve response
+//			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
+//			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+//			ofh.FilePath = tempFH.FilePath;
+//			
+//			RID tempRID = (RID) ClientFS.ReadInput.readObject();
+//			RecordID.chunkhandle = tempRID.chunkhandle;
+//			RecordID.byteoffset = tempRID.byteoffset;
+//			RecordID.size = tempRID.size;
+//			
+//			String retval = ClientFS.ReadInput.readUTF();
+//			converted = FSReturnVals.valueOf(retval);
+//			
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
 //		}
-		
-		// read from ChunkServer
-//		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
-		byte[] temp = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
-		for (int i=0; i < RecordID.size; i++) {
-			payload[i] = temp[i];
+//		
+//		
+//		// request info from master
+//		if (converted != FSReturnVals.Success) {
+//			return converted;
+//		}
+//		
+		// request info from master
+		RID tempRID = new RID();
+		FSReturnVals retval = ClientFS.master.ReadFirstRecord(ofh, tempRID);
+		rec.setRID(tempRID);
+		if (retval != FSReturnVals.Success) {
+			return retval;
 		}
+//		
+//		// read from ChunkServer
+		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+		rec.setPayload(tempPayload);
+//		byte[] tempPayload = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+//		for (int i=0; i < RecordID.size; i++) {
+//			payload[i] = tempPayload[i];
+//		}
 		
 		return FSReturnVals.Success;
 	}
@@ -186,59 +189,62 @@ public class ClientRec {
 	 * Reads the last record of the file specified by ofh into payload Returns
 	 * BadHandle if ofh is invalid Returns RecDoesNotExist if the file is empty
 	 *
-	 * Example usage: ReadLastRecord(FH1, rec, recid)
+	 * Example usage: ReadLastRecord(FH1, RecID1)
 	 */
-	public FSReturnVals ReadLastRecord(FileHandle ofh, byte[] payload, RID RecordID) {
+	public FSReturnVals ReadLastRecord(FileHandle ofh, TinyRec rec) {
 		
-		FSReturnVals converted = null;
-		
-		try {
-			// send command
-			ClientFS.WriteOutput.writeInt(Master.ReadLastRecordCMD);
-			
-			// send arguments
-			ClientFS.WriteOutput.writeObject(ofh);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeObject(RecordID);
-			ClientFS.WriteOutput.flush();
-
-			// retrieve response
-			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
-			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
-			ofh.FilePath = tempFH.FilePath;
-			
-			RID tempRID = (RID) ClientFS.ReadInput.readObject();
-			RecordID.chunkhandle = tempRID.chunkhandle;
-			RecordID.byteoffset = tempRID.byteoffset;
-			RecordID.size = tempRID.size;
-			
-			String retval = ClientFS.ReadInput.readUTF();
-			converted = FSReturnVals.valueOf(retval);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		
-		// request info from master
-		if (converted != FSReturnVals.Success) {
-			return converted;
-		}
-		
-		// request info from master
-//		FSReturnVals retval = ClientFS.master.ReadLastRecord(ofh, RecordID);
-//		if (retval != FSReturnVals.Success) {
-//			return retval;
+//		FSReturnVals converted = null;
+//		
+//		try {
+//			// send command
+//			ClientFS.WriteOutput.writeInt(Master.ReadLastRecordCMD);
+//			
+//			// send arguments
+//			ClientFS.WriteOutput.writeObject(ofh);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeObject(RecordID);
+//			ClientFS.WriteOutput.flush();
+//
+//			// retrieve response
+//			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
+//			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+//			ofh.FilePath = tempFH.FilePath;
+//			
+//			RID tempRID = (RID) ClientFS.ReadInput.readObject();
+//			RecordID.chunkhandle = tempRID.chunkhandle;
+//			RecordID.byteoffset = tempRID.byteoffset;
+//			RecordID.size = tempRID.size;
+//			
+//			String retval = ClientFS.ReadInput.readUTF();
+//			converted = FSReturnVals.valueOf(retval);
+//			
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		
+//		// request info from master
+//		if (converted != FSReturnVals.Success) {
+//			return converted;
 //		}
 		
-		// read from ChunkServer
-//		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
-		byte[] temp = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
-		for (int i=0; i < RecordID.size; i++) {
-			payload[i] = temp[i];
+		// request info from master
+		RID tempRID = new RID();
+		FSReturnVals retval = ClientFS.master.ReadLastRecord(ofh, tempRID);
+		rec.setRID(tempRID);
+		if (retval != FSReturnVals.Success) {
+			return retval;
 		}
+		
+		// read from ChunkServer
+		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+		rec.setPayload(tempPayload);
+//		byte[] tempPayload = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+//		for (int i=0; i < RecordID.size; i++) {
+//			payload[i] = tempPayload[i];
+//		}
 		
 		return FSReturnVals.Success;
 	}
@@ -248,62 +254,66 @@ public class ClientRec {
 	 * ofh into payload Returns BadHandle if ofh is invalid Returns
 	 * RecDoesNotExist if the file is empty or pivot is invalid
 	 *
-	 * Example usage: 1. ReadFirstRecord(FH1, rec, rec1) 2. ReadNextRecord(FH1,
-	 * rec1, rec, rec2) 3. ReadNextRecord(FH1, rec2, rec, rec3)
+	 * Example usage: 1. ReadFirstRecord(FH1, tinyRec1) 2. ReadNextRecord(FH1,
+	 * rec1, tinyRec2) 3. ReadNextRecord(FH1, rec2, tinyRec3)
 	 */
-	public FSReturnVals ReadNextRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
+	public FSReturnVals ReadNextRecord(FileHandle ofh, RID pivot, TinyRec rec) {
 		
-		FSReturnVals converted = null;
-		
-		try {
-			// send command
-			ClientFS.WriteOutput.writeInt(Master.ReadNextRecordCMD);
-			
-			// send arguments
-			ClientFS.WriteOutput.writeObject(ofh);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeObject(pivot);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeObject(RecordID);
-			ClientFS.WriteOutput.flush();
-
-			// retrieve response
-			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
-			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
-			ofh.FilePath = tempFH.FilePath;
-			
-			RID tempRID = (RID) ClientFS.ReadInput.readObject();
-			RecordID.chunkhandle = tempRID.chunkhandle;
-			RecordID.byteoffset = tempRID.byteoffset;
-			RecordID.size = tempRID.size;
-			
-			String retval = ClientFS.ReadInput.readUTF();
-			converted = FSReturnVals.valueOf(retval);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		
-		// request info from master
-		if (converted != FSReturnVals.Success) {
-			return converted;
-		}
-		
-		// request info from master
-//		FSReturnVals retval = ClientFS.master.ReadNextRecord(ofh, pivot, RecordID);
-//		if (retval != FSReturnVals.Success) {
-//			return retval;
+//		FSReturnVals converted = null;
+//		
+//		try {
+//			// send command
+//			ClientFS.WriteOutput.writeInt(Master.ReadNextRecordCMD);
+//			
+//			// send arguments
+//			ClientFS.WriteOutput.writeObject(ofh);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeObject(pivot);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeObject(RecordID);
+//			ClientFS.WriteOutput.flush();
+//
+//			// retrieve response
+//			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
+//			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+//			ofh.FilePath = tempFH.FilePath;
+//			
+//			RID tempRID = (RID) ClientFS.ReadInput.readObject();
+//			RecordID.chunkhandle = tempRID.chunkhandle;
+//			RecordID.byteoffset = tempRID.byteoffset;
+//			RecordID.size = tempRID.size;
+//			
+//			String retval = ClientFS.ReadInput.readUTF();
+//			converted = FSReturnVals.valueOf(retval);
+//			
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		
+//		// request info from master
+//		if (converted != FSReturnVals.Success) {
+//			return converted;
 //		}
 		
-		// read from ChunkServer
-//		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
-		byte[] temp = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
-		for (int i=0; i < RecordID.size; i++) {
-			payload[i] = temp[i];
+		// request info from master
+		RID tempRID = new RID();
+		FSReturnVals retval = ClientFS.master.ReadNextRecord(ofh, pivot, tempRID);
+		rec.setRID(tempRID);
+		
+		if (retval != FSReturnVals.Success) {
+			return retval;
 		}
+		
+		// read from ChunkServer
+		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+		rec.setPayload(tempPayload);
+//		byte[] tempPayload = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+//		for (int i=0; i < RecordID.size; i++) {
+//			payload[i] = tempPayload[i];
+//		}
 		
 		return FSReturnVals.Success;
 	}
@@ -313,62 +323,65 @@ public class ClientRec {
 	 * by ofh into payload Returns BadHandle if ofh is invalid Returns
 	 * RecDoesNotExist if the file is empty or pivot is invalid
 	 *
-	 * Example usage: 1. ReadLastRecord(FH1, rec, recn) 2. ReadPrevRecord(FH1,
-	 * recn-1, rec, rec2) 3. ReadPrevRecord(FH1, recn-2, rec, rec3)
+	 * Example usage: 1. ReadLastRecord(FH1, tinyRec1) 2. ReadPrevRecord(FH1,
+	 * recn-1, tinyRec2) 3. ReadPrevRecord(FH1, recn-2, tinyRec3)
 	 */
-	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, byte[] payload, RID RecordID) {
+	public FSReturnVals ReadPrevRecord(FileHandle ofh, RID pivot, TinyRec rec) {
 		
-		FSReturnVals converted = null;
-		
-		try {
-			// send command
-			ClientFS.WriteOutput.writeInt(Master.ReadPrevRecordCMD);
-			
-			// send arguments
-			ClientFS.WriteOutput.writeObject(ofh);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeObject(pivot);
-			ClientFS.WriteOutput.flush();
-			ClientFS.WriteOutput.writeObject(RecordID);
-			ClientFS.WriteOutput.flush();
-
-			// retrieve response
-			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
-			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
-			ofh.FilePath = tempFH.FilePath;
-			
-			RID tempRID = (RID) ClientFS.ReadInput.readObject();
-			RecordID.chunkhandle = tempRID.chunkhandle;
-			RecordID.byteoffset = tempRID.byteoffset;
-			RecordID.size = tempRID.size;
-			
-			String retval = ClientFS.ReadInput.readUTF();
-			converted = FSReturnVals.valueOf(retval);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		
-		// request info from master
-		if (converted != FSReturnVals.Success) {
-			return converted;
-		}
-		
-		// request info from master
-//		FSReturnVals retval = ClientFS.master.ReadPrevRecord(ofh, pivot, RecordID);
-//		if (retval != FSReturnVals.Success) {
-//			return retval;
+//		FSReturnVals converted = null;
+//		
+//		try {
+//			// send command
+//			ClientFS.WriteOutput.writeInt(Master.ReadPrevRecordCMD);
+//			
+//			// send arguments
+//			ClientFS.WriteOutput.writeObject(ofh);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeObject(pivot);
+//			ClientFS.WriteOutput.flush();
+//			ClientFS.WriteOutput.writeObject(RecordID);
+//			ClientFS.WriteOutput.flush();
+//
+//			// retrieve response
+//			FileHandle tempFH = (FileHandle) ClientFS.ReadInput.readObject();
+//			ofh.ChunkServerStatus = tempFH.ChunkServerStatus;
+//			ofh.FilePath = tempFH.FilePath;
+//			
+//			RID tempRID = (RID) ClientFS.ReadInput.readObject();
+//			RecordID.chunkhandle = tempRID.chunkhandle;
+//			RecordID.byteoffset = tempRID.byteoffset;
+//			RecordID.size = tempRID.size;
+//			
+//			String retval = ClientFS.ReadInput.readUTF();
+//			converted = FSReturnVals.valueOf(retval);
+//			
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		
+//		// request info from master
+//		if (converted != FSReturnVals.Success) {
+//			return converted;
 //		}
 		
-		// read from ChunkServer
-//		byte[] temp = ClientFS.chunkserver1.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
-		byte[] temp = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
-		for (int i=0; i < RecordID.size; i++) {
-			payload[i] = temp[i];
+		// request info from master
+		RID tempRID = new RID();
+		FSReturnVals retval = ClientFS.master.ReadPrevRecord(ofh, pivot, tempRID);
+		rec.setRID(tempRID);
+		if (retval != FSReturnVals.Success) {
+			return retval;
 		}
+		
+		// read from ChunkServer
+		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+		rec.setPayload(tempPayload);
+//		byte[] tempPayload = ClientFS.client.readChunk(RecordID.chunkhandle, RecordID.byteoffset, RecordID.size);
+//		for (int i=0; i < RecordID.size; i++) {
+//			payload[i] = tempPayload[i];
+//		}
 		
 		return FSReturnVals.Success;
 	}

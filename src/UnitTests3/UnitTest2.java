@@ -87,6 +87,9 @@ public class UnitTest2 {
 	}
 	
 	public static boolean isDirExist(String[] arr, String token){
+		if (arr == null || arr.length == 0) {
+			return false;
+		}
 		for (int i=0; i < arr.length; i++)
 			if (arr[i].equals(token)) return true;
 		return false;

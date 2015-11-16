@@ -8,6 +8,7 @@ import com.client.ClientFS.FSReturnVals;
 import com.client.ClientRec;
 import com.client.FileHandle;
 import com.client.RID;
+import com.client.TinyRec;
 
 /**
  * UnitTest4 for Part 3 of TinyFS
@@ -54,25 +55,30 @@ public class UnitTest4 {
 		
 		System.out.println(TestName + "Scan all records in a file");
 		ofd = cfs.OpenFile("/" + dir1 + "/emp", fh);
-		RID r1 = new RID();
-		FSReturnVals RID1 = crec.ReadFirstRecord(fh, payload, r1);
-		int cntr = 0;
+		TinyRec r1 = new TinyRec();
+		FSReturnVals retRR = crec.ReadFirstRecord(fh, r1);
+		int cntr = 1;
 		ArrayList<RID> vect = new ArrayList<RID>();
-		FSReturnVals RID2 = FSReturnVals.Success;
-		while (RID2 == FSReturnVals.Success){
-			RID r2 = new RID();
-			RID2 = crec.ReadNextRecord(fh, r1, payload, r2);
-			byte[] head = new byte[4];
-			System.arraycopy(payload, 0, head, 0, 4);
-			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
-			        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
-			
-			//Store r2 in a vector
-			if(value % 2 != 0 && RID2 == FSReturnVals.Success){
-				vect.add(r2);
+		while (r1 != null){
+			TinyRec r2 = new TinyRec();
+			FSReturnVals retval = crec.ReadNextRecord(fh, r1.getRID(), r2);
+			//if(retval != FSReturnVals.Success){
+			if(r2.getRID() != null){
+				byte[] head = new byte[4];
+				System.arraycopy(r2.getPayload(), 0, head, 0, 4);
+				int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
+				        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
+				
+				//Store r2 in a vector
+				if(value % 2 != 0){
+					vect.add(r2.getRID());
+				}
+				r1 = r2;
+				cntr++;
+			} else {
+				r1 = null;
 			}
-			r1 = r2;
-			cntr++;
+				
 		}
 		
 		System.out.println(TestName + "Delete the even numbered records using their first four bytes.");
@@ -93,21 +99,24 @@ public class UnitTest4 {
 		
 		System.out.println(TestName + "Scan the file and verify there are only odd numbered records using their first four bytes.");
 		ofd = cfs.OpenFile("/" + dir1 + "/emp", fh);
-		r1 = new RID();
-		RID1 = crec.ReadFirstRecord(fh, payload, r1);
-		while (RID1 != FSReturnVals.Fail){
-			RID r2 = new RID();
-			RID2 = crec.ReadNextRecord(fh, r1, payload, r2);
-			byte[] head = new byte[4];
-			System.arraycopy(payload, 0, head, 0, 4);
-			int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
-			        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
-			if(value % 2 != 0 && RID2 == FSReturnVals.Success){
-				System.out.println("Unit test 4 result: fail!  Found an even numbered record with value " + value + ".");
-	    		return;
+		r1 = new TinyRec();
+		retRR = crec.ReadFirstRecord(fh, r1);
+		while (r1 != null){
+			TinyRec r2 = new TinyRec();
+			FSReturnVals retval = crec.ReadNextRecord(fh, r1.getRID(), r2);
+			if(r2.getRID() != null){
+				byte[] head = new byte[4];
+				System.arraycopy(r2.getPayload(), 0, head, 0, 4);
+				int value = ((head[0] & 0xFF) << 24) | ((head[1] & 0xFF) << 16)
+				        | ((head[2] & 0xFF) << 8) | (head[3] & 0xFF);
+				if(value % 2 != 0){
+					System.out.println("Unit test 4 result: fail!  Found an even numbered record with value " + value + ".");
+		    		return;
+				}
+				r1 = r2;
+			}else{
+				r1 = null;
 			}
-			r1 = r2;
-			RID1 = RID2;
 		}
 		fsrv = cfs.CloseFile(fh);
 		System.out.println(TestName + "Success!");
