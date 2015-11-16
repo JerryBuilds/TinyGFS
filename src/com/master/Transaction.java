@@ -29,7 +29,7 @@ public class Transaction {
 	}
 	
 	//Redo function is idempotent
-	public void Redo(String op){
+	public void Redo(){
 
 		switch (action){
 		case CreateDir:

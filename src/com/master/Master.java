@@ -58,7 +58,7 @@ public class Master {
 	private ObjectOutputStream WriteOutputToCS;
 	private ObjectInputStream ReadInputFromCS;
 	
-	private Tree namespace;
+	protected static Tree namespace;
 	private Log log; 
 	//TODO: Update log information when the current log file meets checkpoint(too large)
 	
@@ -70,8 +70,14 @@ public class Master {
 		namespace = new Tree(rootdir);
 		//TODO: Choose a filename to pass in
 		this.log = new Log(MasterLogFile);
-		log.Load();
-		
+
+		if(log.logFile.length() > 0){
+			//load metada from log file
+			log.Load();
+			for(Transaction t: log.transactions){
+				t.Redo();
+			}
+		}
 		
 	}
 	
