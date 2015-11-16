@@ -19,6 +19,7 @@ import com.client.ClientFS;
 import com.client.ClientFS.FSReturnVals;
 import com.client.FileHandle;
 import com.client.RID;
+import com.master.Transaction.Command;
 
 public class Master {
 
@@ -40,6 +41,9 @@ public class Master {
 	public static final int ReadNextRecordCMD = 213;
 	public static final int ReadPrevRecordCMD = 214;
 	
+	//TODO: Maintain 3 file names
+	public static final String MasterLogFile = "MasterLog.txt";
+	
 	public static final int UP = 301;
 	public static final int DOWN = 302;
 	public static final int WRITTEN = 303;
@@ -55,6 +59,8 @@ public class Master {
 	private ObjectInputStream ReadInputFromCS;
 	
 	private Tree namespace;
+	private Log log; 
+	//TODO: Update log information when the current log file meets checkpoint(too large)
 	
 	public Master() {
 		// initialize all data structure
@@ -62,14 +68,22 @@ public class Master {
 		DirectoryMD rootdir = new DirectoryMD();
 		rootdir.name = "";
 		namespace = new Tree(rootdir);
-		
+		//TODO: Choose a filename to pass in
+		this.log = new Log(MasterLogFile);
+		log.Load();
 		
 		
 	}
 	
 	public FSReturnVals CreateDir(String src, String dirname) {
+		//LOGGING: Start transaction
+		log.Start();
+		Transaction T = new Transaction(Command.CreateDir, src, dirname, log.transactions.size()); 
+		System.out.println ( "Transaction ID for CreateDir: " + T.ID);
+		
 		// get node
 		Node newNode = GetNode(src);
+
 		if (newNode == null) {
 			return FSReturnVals.SrcDirNotExistent;
 		}
@@ -78,6 +92,7 @@ public class Master {
 		if (newNode.GetChild(dirname) != null) {
 			return FSReturnVals.DirExists;
 		}
+		
 		
 		// add directory
 		DirectoryMD newDirectory = new DirectoryMD();
