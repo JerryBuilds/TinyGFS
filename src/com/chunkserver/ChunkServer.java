@@ -29,10 +29,16 @@ public class ChunkServer implements ChunkServerInterface {
 	final static String filePath = "csci485/";	//or C:\\newfile.txt
 	public final static String ClientChunkServerConfigFile = "ClientChunkServerConfig.txt";
 	public final static String MasterChunkServerConfigFile = "MasterChunkServerConfig.txt";
+	public final static String MasterChunkServerHBConfigFile = "MasterChunkServerHBConfig.txt";
 	public final static String [] MasterCSconfigFiles = {
 			"MasterCS1Config.txt",
 			"MasterCS2Config.txt",
 			"MasterCS3Config.txt"
+	};
+	public final static String [] MasterCSHBconfigFiles = {
+			"MasterCS1HBConfig.txt",
+			"MasterCS2HBConfig.txt",
+			"MasterCS3HBConfig.txt"
 	};
 	public final static String [] ClientCSconfigFiles = {
 			"ClientCS1Config.txt",
@@ -57,11 +63,21 @@ public class ChunkServer implements ChunkServerInterface {
 	public static final int FALSE = 0;
 	
 	// Master Connection
+	public static int ChunkServerNumCounter = 0;
+	int ChunkServerNum = -1;
+	Socket MasterSocketHB = null;
+	ObjectOutputStream WriteOutputHB = null;
+	ObjectInputStream ReadInputHB = null;
 	
 	/**
 	 * Initialize the chunk server
 	 */
 	public ChunkServer(){
+		// networking prep
+		ChunkServerNum = ChunkServerNumCounter;
+		ChunkServerNumCounter++;
+		
+		// files prep
 		File dir = new File(filePath);
 		File[] fs = dir.listFiles();
 
@@ -271,14 +287,6 @@ public class ChunkServer implements ChunkServerInterface {
 								break;
 							int CMD = Client.ReadIntFromInputStream("ChunkServer", ReadInput);
 							switch (CMD){
-							case CreateChunkCMD:
-								String chunkhandle = createChunk();
-								byte[] CHinbytes = chunkhandle.getBytes();
-								WriteOutput.writeInt(ChunkServer.PayloadSZ + CHinbytes.length);
-								WriteOutput.write(CHinbytes);
-								WriteOutput.flush();
-								break;
-
 							case ReadChunkCMD:
 								int offset =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
 								int payloadlength =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
@@ -310,8 +318,21 @@ public class ChunkServer implements ChunkServerInterface {
 								ChunkHandle = (new String(CHinBytes)).toString();
 
 								//Call the writeChunk command
-								if (writeChunk(ChunkHandle, payload, offset))
+								if (writeChunk(ChunkHandle, payload, offset)) {
+									// TODO send HeartBeat message to Master to update metadata
+									// some networking code with Master's HB channel
+									
+									// send command and arguments
+									/*WriteOutputHB.writeInt(ChunkServerNum);
+									WriteOutputHB.writeInt(offset);
+									WriteOutputHB.writeInt(payloadlength);
+									WriteOutputHB.writeUTF(ChunkHandle);
+									
+									// confirm response
+									int Waiting = ReadInputHB.readInt();*/
+									
 									WriteOutput.writeInt(ChunkServer.TRUE);
+								}
 								else WriteOutput.writeInt(ChunkServer.FALSE);
 								
 								WriteOutput.flush();
@@ -343,7 +364,37 @@ public class ChunkServer implements ChunkServerInterface {
 		clientThread.start();
 	}
 	
-	public void MasterConnection() {
+	public void CS2MasterConnectionHB() {
+		Runnable masterTask = new Runnable() {
+			public void run() {
+				ConnectToMasterHB();
+			}
+			public void ConnectToMasterHB() {
+				// Connect to master
+				int ServerPort = 0;
+				
+				try {
+					BufferedReader binput = new BufferedReader(new FileReader(MasterCSHBconfigFiles[ChunkServerNum]));
+					String port = binput.readLine();
+					port = port.substring( port.indexOf(':')+1 );
+					ServerPort = Integer.parseInt(port);
+					
+					MasterSocketHB = new Socket("127.0.0.1", ServerPort);
+					WriteOutputHB = new ObjectOutputStream(MasterSocketHB.getOutputStream());
+					ReadInputHB = new ObjectInputStream(MasterSocketHB.getInputStream());
+				} catch (FileNotFoundException e) {
+					System.out.println("Error (ChunkServer), the config file "+ MasterCSHBconfigFiles[ChunkServerNum] +" containing the port of the ChunkServer is missing.");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		Thread masterThread = new Thread(masterTask);
+		masterThread.start();
+	}
+	
+	
+	public void CS2MasterConnection() {
 		Runnable masterTask = new Runnable() {
 			public void run() {
 				ReadAndProcessMasterRequests();
@@ -357,7 +408,7 @@ public class ChunkServer implements ChunkServerInterface {
 				ObjectInputStream ReadInput = null;
 				
 				try {
-					BufferedReader binput = new BufferedReader(new FileReader(MasterChunkServerConfigFile));
+					BufferedReader binput = new BufferedReader(new FileReader(MasterCSconfigFiles[ChunkServerNum]));
 					String port = binput.readLine();
 					port = port.substring( port.indexOf(':')+1 );
 					ServerPort = Integer.parseInt(port);
@@ -365,8 +416,13 @@ public class ChunkServer implements ChunkServerInterface {
 					MasterSocket = new Socket("127.0.0.1", ServerPort);
 					WriteOutput = new ObjectOutputStream(MasterSocket.getOutputStream());
 					ReadInput = new ObjectInputStream(MasterSocket.getInputStream());
+					
+					// update CS info
+					ChunkServerNum = ChunkServerNumCounter;
+					ChunkServerNumCounter++;
+					
 				} catch (FileNotFoundException e) {
-					System.out.println("Error (ChunkServer), the config file "+ MasterChunkServerConfigFile +" containing the port of the ChunkServer is missing.");
+					System.out.println("Error (ChunkServer), the config file "+ MasterCSconfigFiles[ChunkServerNum] +" containing the port of the ChunkServer is missing.");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -386,44 +442,6 @@ public class ChunkServer implements ChunkServerInterface {
 								byte[] CHinbytes = chunkhandle.getBytes();
 								WriteOutput.writeInt(ChunkServer.PayloadSZ + CHinbytes.length);
 								WriteOutput.write(CHinbytes);
-								WriteOutput.flush();
-								break;
-
-							case ReadChunkCMD:
-								int offset =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
-								int payloadlength =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
-								int chunkhandlesize = payloadsize - ChunkServer.PayloadSZ - ChunkServer.CMDlength - (2 * 4);
-								if (chunkhandlesize < 0)
-									System.out.println("Error in ChunkServer.java, ReadChunkCMD has wrong size.");
-								byte[] CHinBytes = Client.RecvPayload("ChunkServer", ReadInput, chunkhandlesize);
-								String ChunkHandle = (new String(CHinBytes)).toString();
-								
-								byte[] res = readChunk(ChunkHandle, offset, payloadlength);
-								
-								if (res == null)
-									WriteOutput.writeInt(ChunkServer.PayloadSZ);
-								else {
-									WriteOutput.writeInt(ChunkServer.PayloadSZ + res.length);
-									WriteOutput.write(res);
-								}
-								WriteOutput.flush();
-								break;
-
-							case WriteChunkCMD:
-								offset =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
-								payloadlength =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
-								byte[] payload = Client.RecvPayload("ChunkServer", ReadInput, payloadlength);
-								chunkhandlesize = payloadsize - ChunkServer.PayloadSZ - ChunkServer.CMDlength - (2 * 4) - payloadlength;
-								if (chunkhandlesize < 0)
-									System.out.println("Error in ChunkServer.java, WritehChunkCMD has wrong size.");
-								CHinBytes = Client.RecvPayload("ChunkServer", ReadInput, chunkhandlesize);
-								ChunkHandle = (new String(CHinBytes)).toString();
-
-								//Call the writeChunk command
-								if (writeChunk(ChunkHandle, payload, offset))
-									WriteOutput.writeInt(ChunkServer.TRUE);
-								else WriteOutput.writeInt(ChunkServer.FALSE);
-								
 								WriteOutput.flush();
 								break;
 
@@ -457,7 +475,8 @@ public class ChunkServer implements ChunkServerInterface {
 	{
 		ChunkServer cs = new ChunkServer();
 //		cs.ReadAndProcessRequests();
-		cs.MasterConnection();
+		cs.CS2MasterConnection();
+//		cs.CS2MasterConnectionHB();
 		cs.ClientConnection();
 	}
 }

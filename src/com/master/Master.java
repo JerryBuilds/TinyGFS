@@ -1,7 +1,5 @@
 package com.master;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,6 +8,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
 
@@ -44,17 +43,19 @@ public class Master {
 	public static final int DOWN = 302;
 	public static final int WRITTEN = 303;
 	public static final int UNWRITTEN = 304;
-	private boolean [] ChunkServerAvailability = {true};
+	private boolean [] ChunkServerAvailability;
 	private static final int ChunkServerExpected = 1; // TO BE CHANGED LATER
-	private static int ChunkServerCount = 0; // TO BE CHANGED LATER
+	private static int ChunkServerCount = 0;
+	private static int ChunkServerHBCount = 0;
 	
 	
-	private ServerSocket csCommChannel;
-	private Socket csConnection;
-	private ObjectOutputStream WriteOutputToCS;
-	private ObjectInputStream ReadInputFromCS;
+	private ServerSocket [] csCommChannel, hbCommChannel;
+	private Socket [] csConnection, hbConnection;
+	private ObjectOutputStream [] WriteOutputToCS, WriteOutputHB;
+	private ObjectInputStream [] ReadInputFromCS, ReadInputHB;
 	
 	private Tree namespace;
+	private HashMap ch2file = new HashMap();
 	
 	public Master() {
 		// initialize all data structure
@@ -63,7 +64,18 @@ public class Master {
 		rootdir.name = "";
 		namespace = new Tree(rootdir);
 		
+		// initializing networking content
+		ChunkServerAvailability = new boolean[ChunkServerExpected];
 		
+		// initializing sockets
+		csCommChannel = new ServerSocket[ChunkServerExpected];
+		hbCommChannel = new ServerSocket[ChunkServerExpected];
+		csConnection = new Socket[ChunkServerExpected];
+		hbConnection = new Socket[ChunkServerExpected];
+		WriteOutputToCS = new ObjectOutputStream[ChunkServerExpected];
+		WriteOutputHB = new ObjectOutputStream[ChunkServerExpected];
+		ReadInputFromCS = new ObjectInputStream[ChunkServerExpected];
+		ReadInputHB = new ObjectInputStream[ChunkServerExpected];
 		
 	}
 	
@@ -244,8 +256,12 @@ public class Master {
 			// create new RID
 			RID newRid = new RID();
 			newRid.chunkhandle = csCreateChunk(); // TO BE CHANGED LATER
+													// MUST DO TO ALL CHUNKSERVERS
 			newRid.byteoffset = 0;
 			newRid.size = size;
+			
+			// update hashmap
+			ch2file.put(newRid.chunkhandle, ofh.FilePath);
 			
 			// create new CSW (ChunkServerWritten)
 			for (int i=0; i < ChunkServerCount; i++) {
@@ -299,6 +315,9 @@ public class Master {
 				newRid.chunkhandle = csCreateChunk(); // TO BE CHANGED LATER
 				newRid.byteoffset = 0;
 				newRid.size = size;
+				
+				// update hashmap
+				ch2file.put(newRid.chunkhandle, ofh.FilePath);
 				
 				// update metadata
 				fmd.RecordIDInfo.add(newRid);
@@ -374,17 +393,31 @@ public class Master {
 	}
 	
 	public String csCreateChunk() {
+		String [] ch = new String[ChunkServerCount];
 		try {
-			WriteOutputToCS.writeInt(ChunkServer.PayloadSZ + ChunkServer.CMDlength);
-			WriteOutputToCS.writeInt(ChunkServer.CreateChunkCMD);
-			WriteOutputToCS.flush();
+			for (int i=0; i < ChunkServerCount; i++) {
+				/*if (ChunkServerAvailability[i] == false) {
+					continue;
+				}*/
+				WriteOutputToCS[i].writeInt(ChunkServer.PayloadSZ + ChunkServer.CMDlength);
+				WriteOutputToCS[i].writeInt(ChunkServer.CreateChunkCMD);
+				WriteOutputToCS[i].flush();
+				
+				int ChunkHandleSize = Client.ReadIntFromInputStream("Master", ReadInputFromCS[i]);
+				ChunkHandleSize -= ChunkServer.PayloadSZ;  //reduce the length by the first four bytes that identify the length
+				byte[] CHinBytes = Client.RecvPayload("Master", ReadInputFromCS[i], ChunkHandleSize); 
+				ch[i] = (new String(CHinBytes)).toString();
+				
+			}
 			
-			int ChunkHandleSize = Client.ReadIntFromInputStream("Client", ReadInputFromCS);
-			ChunkHandleSize -= ChunkServer.PayloadSZ;  //reduce the length by the first four bytes that identify the length
-			byte[] CHinBytes = Client.RecvPayload("Client", ReadInputFromCS, ChunkHandleSize); 
-			return (new String(CHinBytes)).toString();
+			for (int i=0; i < ChunkServerCount; i++) {
+//				if (ChunkServerAvailability[i] == true) {
+					return ch[i];
+//				}
+			}
+			
 		} catch (IOException e) {
-			System.out.println("Error in Client.createChunk:  Failed to create a chunk.");
+			System.out.println("Error in Master.csCreateChunk:  Failed to create a chunk.");
 			e.printStackTrace();
 		}
 		return null;
@@ -995,42 +1028,138 @@ public class Master {
 		}
 	}
 	
-	public void ChunkServerConnect() {
-		
-		
-		while (ChunkServerCount != ChunkServerExpected) {
-			
-			int ServerPort = 0; // automatically ask OS to find open port
-			
-			try {
-				System.out.println("Waiting on incoming chunkserver connections...");
-				
-				// Open connection up to ChunkServers
-				csCommChannel = new ServerSocket(ServerPort);
-				ServerPort = csCommChannel.getLocalPort();
-				PrintWriter outWrite=new PrintWriter(new FileOutputStream(ChunkServer.MasterChunkServerConfigFile));
-				outWrite.println("localhost:"+ServerPort);
-				outWrite.close();
-				
-				
-				// ChunkServer connects to Master
-				csConnection = csCommChannel.accept();
-				System.out.println("Chunkserver connected!");
-				WriteOutputToCS = new ObjectOutputStream(csConnection.getOutputStream());
-				ReadInputFromCS = new ObjectInputStream(csConnection.getInputStream());
-				
-				// increment
-				++ChunkServerCount;
-				
-				
-			} catch (IOException e) {
-				System.out.println("Error, failed to open a new socket to listen on.");
-				e.printStackTrace();
+	// ChunkServers connect to Master
+	// ChunkServers send heartbeat messages to Master
+	public void CS2MasterHeartbeat() {
+		Runnable csTask = new Runnable() {
+			public void run() {
+				ReadAndProcessCSRequests();
 			}
-			
-			
+			public void ReadAndProcessCSRequests() {
+				// Wait for ChunkServer to connect heartbeat socket to Master
+				int ServerPort = 0;
+				
+				try {
+					//Allocate a port and write it to the config file for the ChunkServer to consume
+					hbCommChannel[ChunkServerHBCount] = new ServerSocket(ServerPort);
+					ServerPort=hbCommChannel[ChunkServerHBCount].getLocalPort();
+					PrintWriter outWrite=new PrintWriter(new FileOutputStream(ChunkServer.MasterCSHBconfigFiles[ChunkServerHBCount]));
+					outWrite.println("localhost:"+ServerPort);
+					outWrite.close();
+				} catch (IOException ex) {
+					System.out.println("Error, failed to open a new socket to listen on.");
+					ex.printStackTrace();
+				}
+				
+				boolean done = false;
+				int HBindex = ChunkServerHBCount;
+				
+				while (!done) {
+					try {
+						hbConnection[ChunkServerHBCount] = hbCommChannel[ChunkServerHBCount].accept();
+						ReadInputHB[ChunkServerHBCount] = new ObjectInputStream(hbConnection[ChunkServerHBCount].getInputStream());
+						WriteOutputHB[ChunkServerHBCount] = new ObjectOutputStream(hbConnection[ChunkServerHBCount].getOutputStream());
+						
+
+						ChunkServerAvailability[HBindex] = true;
+						ChunkServerHBCount++;
+						System.out.println(ChunkServerHBCount + " out of " + ChunkServerExpected +" ChunkServers connected through HeartBeat Channel.");
+						
+						// initialize variables
+						int CSnum = -1;
+						int offset = -1;
+						int payloadsize = -1;
+						String chunkhandle = null;
+						String filepath;
+						FileMD fmd;
+						RID tempRid = null;
+						int RidIndex = -1;
+						
+						// update Master's metadata
+						while (!hbConnection[HBindex].isClosed()) {
+							// read from chunkserver
+							CSnum = ReadInputHB[HBindex].readInt();
+							offset = ReadInputHB[HBindex].readInt();
+							payloadsize = ReadInputHB[HBindex].readInt();
+							chunkhandle = ReadInputHB[HBindex].readUTF();
+							
+							// update metadata on master
+							filepath = (String) ch2file.get(chunkhandle);
+							Node tempNode = GetNode(filepath);
+							fmd = (FileMD) tempNode.GetData();
+							tempRid = new RID();
+							tempRid.chunkhandle = chunkhandle;
+							tempRid.byteoffset = offset;
+							tempRid.size = payloadsize;
+							RidIndex = IndexOf(fmd.RecordIDInfo, tempRid);
+							fmd.ChunkServerWritten.get(CSnum).set(RidIndex, true);
+							
+							
+							// return to chunkserver
+							WriteOutputHB[HBindex].writeInt(0);
+							
+						}
+						
+					} catch (IOException e) {
+						ChunkServerAvailability[HBindex] = false;
+						System.out.println("ChunkServer HeartBeat channel disconnected");
+					}
+				}
+				
+				
+				
+			}
+		};
+		for (int i=0; i < ChunkServerExpected; i++) {
+			Thread csThread = new Thread(csTask);
+			csThread.start();
 		}
-		
+	}
+	
+	// ChunkServers connect to Master
+	// ChunkServers process Master requests
+	public void CS2MasterConnection() {
+		Runnable csTask = new Runnable() {
+			public void run() {
+				
+				while (ChunkServerCount != ChunkServerExpected) {
+					// Wait for ChunkServer to connect
+					WaitForChunkServer();
+					
+					// increment
+					++ChunkServerCount;
+					System.out.println(ChunkServerCount + " out of " + ChunkServerExpected +" ChunkServers connected.");
+					
+				}
+			}
+			public void WaitForChunkServer() {
+				int ServerPort = 0; // automatically ask OS to find open port
+				
+				try {
+					System.out.println("Waiting on incoming chunkserver connections...");
+					
+					// Open connection up to ChunkServers
+					csCommChannel[ChunkServerCount] = new ServerSocket(ServerPort);
+					ServerPort = csCommChannel[ChunkServerCount].getLocalPort();
+					PrintWriter outWrite=new PrintWriter(new FileOutputStream(ChunkServer.MasterCSconfigFiles[ChunkServerCount]));
+					outWrite.println("localhost:"+ServerPort);
+					outWrite.close();
+					
+					
+					// ChunkServer connects to Master
+					csConnection[ChunkServerCount] = csCommChannel[ChunkServerCount].accept();
+					WriteOutputToCS[ChunkServerCount] = new ObjectOutputStream(csConnection[ChunkServerCount].getOutputStream());
+					ReadInputFromCS[ChunkServerCount] = new ObjectInputStream(csConnection[ChunkServerCount].getInputStream());
+					
+				} catch (IOException e) {
+					System.out.println("Error, failed to open a new socket to listen on.");
+					e.printStackTrace();
+				}
+				
+			}
+		};
+		Thread csThread = new Thread(csTask);
+		csThread.start();
 	}
 	
 	/*
@@ -1112,7 +1241,8 @@ public class Master {
 	public static void main(String [] args) {
 		Master ms = new Master();
 //		ms.CommandLine();
-		ms.ChunkServerConnect();
+		ms.CS2MasterConnection();
+//		ms.CS2MasterHeartbeat();
 		ms.ReadAndProcessClientRequests();
 	}
 }
