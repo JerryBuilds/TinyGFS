@@ -64,7 +64,7 @@ public class Client implements ClientInterface {
 	 * Initialize the client  FileNotFoundException
 	 */
 	public Client(){
-		/*
+		
 		if (ClientSocket != null) return; //The client is already connected
 		try {
 			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientChunkServerConfigFile));
@@ -81,7 +81,7 @@ public class Client implements ClientInterface {
 			e.printStackTrace();
 			System.out.println("Can't find file.");
 		}
-		*/
+		
 	}
 	
 	/**

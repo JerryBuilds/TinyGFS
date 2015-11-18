@@ -243,8 +243,7 @@ public class Master {
 			
 			// create new RID
 			RID newRid = new RID();
-			ChunkServer tempcs = ClientFS.chunkserver1;
-			newRid.chunkhandle = ClientFS.chunkserver1.createChunk(); // TO BE CHANGED LATER
+			newRid.chunkhandle = csCreateChunk(); // TO BE CHANGED LATER
 			newRid.byteoffset = 0;
 			newRid.size = size;
 			
@@ -297,7 +296,7 @@ public class Master {
 				
 				// create new RID
 				RID newRid = new RID();
-				newRid.chunkhandle = ClientFS.chunkserver1.createChunk(); // TO BE CHANGED LATER
+				newRid.chunkhandle = csCreateChunk(); // TO BE CHANGED LATER
 				newRid.byteoffset = 0;
 				newRid.size = size;
 				
@@ -372,6 +371,23 @@ public class Master {
 		}
 		
 		return FSReturnVals.Success;
+	}
+	
+	public String csCreateChunk() {
+		try {
+			WriteOutputToCS.writeInt(ChunkServer.PayloadSZ + ChunkServer.CMDlength);
+			WriteOutputToCS.writeInt(ChunkServer.CreateChunkCMD);
+			WriteOutputToCS.flush();
+			
+			int ChunkHandleSize = Client.ReadIntFromInputStream("Client", ReadInputFromCS);
+			ChunkHandleSize -= ChunkServer.PayloadSZ;  //reduce the length by the first four bytes that identify the length
+			byte[] CHinBytes = Client.RecvPayload("Client", ReadInputFromCS, ChunkHandleSize); 
+			return (new String(CHinBytes)).toString();
+		} catch (IOException e) {
+			System.out.println("Error in Client.createChunk:  Failed to create a chunk.");
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	public FSReturnVals DeleteRecord(FileHandle ofh, RID RecordID) {
@@ -987,6 +1003,8 @@ public class Master {
 			int ServerPort = 0; // automatically ask OS to find open port
 			
 			try {
+				System.out.println("Waiting on incoming chunkserver connections...");
+				
 				// Open connection up to ChunkServers
 				csCommChannel = new ServerSocket(ServerPort);
 				ServerPort = csCommChannel.getLocalPort();
@@ -997,8 +1015,12 @@ public class Master {
 				
 				// ChunkServer connects to Master
 				csConnection = csCommChannel.accept();
+				System.out.println("Chunkserver connected!");
 				WriteOutputToCS = new ObjectOutputStream(csConnection.getOutputStream());
 				ReadInputFromCS = new ObjectInputStream(csConnection.getInputStream());
+				
+				// increment
+				++ChunkServerCount;
 				
 				
 			} catch (IOException e) {
@@ -1090,7 +1112,7 @@ public class Master {
 	public static void main(String [] args) {
 		Master ms = new Master();
 //		ms.CommandLine();
-//		ms.ChunkServerConnect();
+		ms.ChunkServerConnect();
 		ms.ReadAndProcessClientRequests();
 	}
 }

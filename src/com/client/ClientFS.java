@@ -32,7 +32,7 @@ public class ClientFS {
 		DirDoesNotExist
 	}
 	public static Master master;
-	public static ChunkServer chunkserver1 = new ChunkServer();
+//	public static ChunkServer chunkserver1 = new ChunkServer();
 	public static Client client;
 	
 	public static int MasterPort = 0;

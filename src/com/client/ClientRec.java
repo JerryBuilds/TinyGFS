@@ -63,8 +63,8 @@ public class ClientRec {
 //		}
 		
 		// write to chunkserver
-		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
-//		ClientFS.client.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
+//		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
+		ClientFS.client.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
 		
 		return FSReturnVals.Success;
 	}
@@ -172,8 +172,8 @@ public class ClientRec {
 //		}
 		
 //		// read from ChunkServer
-		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
-//		byte[] tempPayload = ClientFS.client.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+//		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+		byte[] tempPayload = ClientFS.client.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
 		rec.setPayload(tempPayload);
 		
 		return FSReturnVals.Success;
@@ -230,8 +230,8 @@ public class ClientRec {
 //		}
 		
 		// read from ChunkServer
-		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
-//		byte[] tempPayload = ClientFS.client.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+//		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+		byte[] tempPayload = ClientFS.client.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
 		rec.setPayload(tempPayload);
 		
 		return FSReturnVals.Success;
@@ -293,8 +293,8 @@ public class ClientRec {
 //		}
 		
 		// read from ChunkServer
-		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
-//		byte[] tempPayload = ClientFS.client.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+//		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+		byte[] tempPayload = ClientFS.client.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
 		rec.setPayload(tempPayload);
 		
 		return FSReturnVals.Success;
@@ -355,8 +355,8 @@ public class ClientRec {
 //		}
 		
 		// read from ChunkServer
-		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
-//		byte[] tempPayload = ClientFS.client.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+//		byte[] tempPayload = ClientFS.chunkserver1.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
+		byte[] tempPayload = ClientFS.client.readChunk(rec.getRID().chunkhandle, rec.getRID().byteoffset, rec.getRID().size);
 		rec.setPayload(tempPayload);
 		
 		return FSReturnVals.Success;
