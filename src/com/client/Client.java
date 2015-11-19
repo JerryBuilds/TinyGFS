@@ -67,7 +67,7 @@ public class Client implements ClientInterface {
 		
 		if (ClientSocket != null) return; //The client is already connected
 		try {
-			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientChunkServerConfigFile));
+			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientCSconfigFiles[0]));
 			String port = binput.readLine();
 			port = port.substring( port.indexOf(':')+1 );
 			ServerPort = Integer.parseInt(port);
@@ -76,7 +76,7 @@ public class Client implements ClientInterface {
 			WriteOutput = new ObjectOutputStream(ClientSocket.getOutputStream());
 			ReadInput = new ObjectInputStream(ClientSocket.getInputStream());
 		}catch (FileNotFoundException e) {
-			System.out.println("Error (Client), the config file "+ ChunkServer.ClientChunkServerConfigFile +" containing the port of the ChunkServer is missing.");
+			System.out.println("Error (Client), the config file "+ ChunkServer.ClientCSconfigFiles[0] +" containing the port of the ChunkServer is missing.");
 		}catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Can't find file.");

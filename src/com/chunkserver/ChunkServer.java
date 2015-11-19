@@ -31,20 +31,26 @@ public class ChunkServer implements ChunkServerInterface {
 	public final static String MasterChunkServerConfigFile = "MasterChunkServerConfig.txt";
 	public final static String MasterChunkServerHBConfigFile = "MasterChunkServerHBConfig.txt";
 	public final static String [] MasterCSconfigFiles = {
+			"MasterCS0Config.txt",
 			"MasterCS1Config.txt",
-			"MasterCS2Config.txt",
-			"MasterCS3Config.txt"
+			"MasterCS2Config.txt"
 	};
 	public final static String [] MasterCSHBconfigFiles = {
+			"MasterCS0HBConfig.txt",
 			"MasterCS1HBConfig.txt",
-			"MasterCS2HBConfig.txt",
-			"MasterCS3HBConfig.txt"
+			"MasterCS2HBConfig.txt"
 	};
 	public final static String [] ClientCSconfigFiles = {
+			"ClientCS0Config.txt",
 			"ClientCS1Config.txt",
-			"ClientCS2Config.txt",
-			"ClientCS3Config.txt"
+			"ClientCS2Config.txt"
 	};
+	public final static String [] ChunkServerConfigFiles = {
+			"ChunkServer0Config.txt",
+			"ChunkServer1Config.txt",
+			"ChunkServer2Config.txt"
+	};
+	
 	public final static int ChunkSize = 1024 * 1024; //1024 KB chunk sizes
 	
 	//Used for the file system
@@ -72,10 +78,11 @@ public class ChunkServer implements ChunkServerInterface {
 	/**
 	 * Initialize the chunk server
 	 */
-	public ChunkServer(){
+	public ChunkServer(int csID){
 		// networking prep
-		ChunkServerNum = ChunkServerNumCounter;
-		ChunkServerNumCounter++;
+//		ChunkServerNum = ChunkServerNumCounter;
+//		ChunkServerNumCounter++;
+		ChunkServerNum = csID;
 		
 		// files prep
 		File dir = new File(filePath);
@@ -142,6 +149,7 @@ public class ChunkServer implements ChunkServerInterface {
 		}
 	}
 	
+	/*
 	public void ReadAndProcessRequests()
 	{	
 		//Used for communication with the Client via the network
@@ -154,7 +162,7 @@ public class ChunkServer implements ChunkServerInterface {
 			//Allocate a port and write it to the config file for the Client to consume
 			commChanel = new ServerSocket(ServerPort);
 			ServerPort=commChanel.getLocalPort();
-			PrintWriter outWrite=new PrintWriter(new FileOutputStream(ClientChunkServerConfigFile));
+			PrintWriter outWrite=new PrintWriter(new FileOutputStream(ClientCSconfigFiles[ChunkServerNum]));
 			outWrite.println("localhost:"+ServerPort);
 			outWrite.close();
 		} catch (IOException ex) {
@@ -245,8 +253,9 @@ public class ChunkServer implements ChunkServerInterface {
 			}
 		}
 	}
+	*/
 	
-	public void ClientConnection() {
+	private void ClientConnection() {
 		Runnable clientTask = new Runnable() {
 			public void run() {
 				ReadAndProcessClientRequests();
@@ -263,7 +272,7 @@ public class ChunkServer implements ChunkServerInterface {
 					//Allocate a port and write it to the config file for the Client to consume
 					commChanel = new ServerSocket(ServerPort);
 					ServerPort=commChanel.getLocalPort();
-					PrintWriter outWrite=new PrintWriter(new FileOutputStream(ClientChunkServerConfigFile));
+					PrintWriter outWrite=new PrintWriter(new FileOutputStream(ClientCSconfigFiles[ChunkServerNum]));
 					outWrite.println("localhost:"+ServerPort);
 					outWrite.close();
 				} catch (IOException ex) {
@@ -365,8 +374,64 @@ public class ChunkServer implements ChunkServerInterface {
 		clientThread.start();
 	}
 	
+	// ChunkServer writing to other ChunkServers
+	private boolean ChunkServerCopy(String chunkhandle, byte[] payload, int offset) {
+		// connect and copy data to all other ChunkServers
+		for (int i=0; i < ChunkServerNumCounter; i++) {
+			// don't copy to self
+			if (i == ChunkServerNum) {
+				continue;
+			}
+			
+			// prep to connect to ChunkServer
+			int ServerPort = 0;
+			try {
+				BufferedReader binput = new BufferedReader(new FileReader(ChunkServerConfigFiles[ChunkServerNum]));
+				String port = binput.readLine();
+				port = port.substring( port.indexOf(':')+1 );
+				ServerPort = Integer.parseInt(port);
+				
+				// connect to ChunkServer
+				Socket csSocket = new Socket("127.0.0.1", ServerPort);
+				ObjectOutputStream WriteOutputCS = new ObjectOutputStream(MasterSocketHB.getOutputStream());
+				ObjectInputStream ReadInputCS = new ObjectInputStream(MasterSocketHB.getInputStream());
+				
+				System.out.println("ChunkServer " + ChunkServerNum + " connected to ChunkServer " + i);
+				
+				// copy to ChunkServer
+				byte[] CHinBytes = chunkhandle.getBytes();
+				WriteOutputCS.writeInt(PayloadSZ + CMDlength + (2*4) + payload.length + CHinBytes.length);
+				WriteOutputCS.writeInt(WriteChunkCMD);
+				WriteOutputCS.writeInt(offset);
+				WriteOutputCS.writeInt(payload.length);
+				WriteOutputCS.write(payload);
+				WriteOutputCS.write(CHinBytes);
+				WriteOutputCS.flush();
+				
+				// receive confirmation
+				int result = Client.ReadIntFromInputStream("ChunkServer", ReadInputCS);
+				if (result == FALSE) {
+					return false;
+				}
+				
+				// disconnect from ChunkServer
+				csSocket.close();
+				
+			} catch (FileNotFoundException e) {
+				System.out.println("Error (ChunkServer), the config file "+ ChunkServerConfigFiles[ChunkServerNum] +" containing the port of the ChunkServer is missing.");
+			} catch (IOException e) {
+				System.out.println("Error in ChunkServer.ChunkServerCopy: Failed to copy a chunk.");
+				e.printStackTrace();
+			}
+			
+		}
+		
+		
+		return true;
+	}
+	
 	// tells Master that this one is still alive
-	public void CS2MasterConnectionHB() {
+	private void CS2MasterConnectionHB() {
 		Runnable masterTask = new Runnable() {
 			public void run() {
 				ConnectToMasterHB();
@@ -401,7 +466,7 @@ public class ChunkServer implements ChunkServerInterface {
 	
 	// Allows Master to call CreateChunk
 	// Services Master requests
-	public void CS2MasterConnection() {
+	private void CS2MasterConnection() {
 		Runnable masterTask = new Runnable() {
 			public void run() {
 				ReadAndProcessMasterRequests();
@@ -477,13 +542,113 @@ public class ChunkServer implements ChunkServerInterface {
 		Thread masterThread = new Thread(masterTask);
 		masterThread.start();
 	}
+	
+	private void ChunkServerConnection() {
+		Runnable csTask = new Runnable() {
+			public void run() {
+				ReadAndProcessChunkServerRequests();
+			}
+			public void ReadAndProcessChunkServerRequests()
+			{	
+				//Used for communication with the Client via the network
+				int ServerPort = 0; //Set to 0 to cause ServerSocket to allocate the port 
+				ServerSocket csCommChanel = null;
+				ObjectOutputStream WriteOutputCS = null;
+				ObjectInputStream ReadInputCS = null;
+				
+				try {
+					//Allocate a port and write it to the config file for the Client to consume
+					csCommChanel = new ServerSocket(ServerPort);
+					ServerPort=csCommChanel.getLocalPort();
+					PrintWriter outWrite=new PrintWriter(new FileOutputStream(ChunkServerConfigFiles[ChunkServerNum]));
+					outWrite.println("localhost:"+ServerPort);
+					outWrite.close();
+				} catch (IOException ex) {
+					System.out.println("Error, failed to open a new socket to listen on.");
+					ex.printStackTrace();
+				}
+				
+				boolean done = false;
+				Socket ChunkServerConnection = null;  //A client's connection to the server
+
+				while (!done){
+					try {
+						ChunkServerConnection = csCommChanel.accept();
+						ReadInputCS = new ObjectInputStream(ChunkServerConnection.getInputStream());
+						WriteOutputCS = new ObjectOutputStream(ChunkServerConnection.getOutputStream());
+						
+						//Use the existing input and output stream as long as the client is connected
+						while (!ChunkServerConnection.isClosed()) {
+							int payloadsize =  Client.ReadIntFromInputStream("ChunkServer", ReadInputCS);
+							if (payloadsize == -1) 
+								break;
+							int CMD = Client.ReadIntFromInputStream("ChunkServer", ReadInputCS);
+							switch (CMD){
+							case WriteChunkCMD:
+								int offset =  Client.ReadIntFromInputStream("ChunkServer", ReadInputCS);
+								int payloadlength =  Client.ReadIntFromInputStream("ChunkServer", ReadInputCS);
+								byte[] payload = Client.RecvPayload("ChunkServer", ReadInputCS, payloadlength);
+								int chunkhandlesize = payloadsize - ChunkServer.PayloadSZ - ChunkServer.CMDlength - (2 * 4) - payloadlength;
+								if (chunkhandlesize < 0)
+									System.out.println("Error in ChunkServer.java, WritehChunkCMD has wrong size.");
+								byte[] CHinBytes = Client.RecvPayload("ChunkServer", ReadInputCS, chunkhandlesize);
+								String ChunkHandle = (new String(CHinBytes)).toString();
+
+								//Call the writeChunk command
+								if (writeChunk(ChunkHandle, payload, offset)) {
+									// TODO send HeartBeat message to Master to update metadata
+									// some networking code with Master's HB channel
+									
+									// send command and arguments
+									WriteOutputHB.writeInt(ChunkServerNum);
+									WriteOutputHB.writeInt(offset);
+									WriteOutputHB.writeInt(payloadlength);
+									WriteOutputHB.writeUTF(ChunkHandle);
+									WriteOutputHB.flush();
+									
+									// confirm response
+									int Waiting = ReadInputHB.readInt();
+									
+									WriteOutputCS.writeInt(ChunkServer.TRUE);
+								}
+								else WriteOutputCS.writeInt(ChunkServer.FALSE);
+								
+								WriteOutputCS.flush();
+								break;
+
+							default:
+								System.out.println("Error in ChunkServer, specified CMD "+CMD+" is not recognized.");
+								break;
+							}
+						}
+					} catch (IOException ex){
+						System.out.println("Client Disconnected");
+					} finally {
+						try {
+							if (ChunkServerConnection != null)
+								ChunkServerConnection.close();
+							if (ReadInputCS != null)
+								ReadInputCS.close();
+							if (WriteOutputCS != null) WriteOutputCS.close();
+						} catch (IOException fex){
+							System.out.println("Error (ChunkServer):  Failed to close either a valid connection or its input/output stream.");
+							fex.printStackTrace();
+						}
+					}
+				}
+			}
+		};
+		Thread clientThread = new Thread(csTask);
+		clientThread.start();
+	}
 
 	public static void main(String args[])
 	{
-		ChunkServer cs = new ChunkServer();
+		ChunkServer cs = new ChunkServer(2);
 //		cs.ReadAndProcessRequests();
 		cs.CS2MasterConnection();
 		cs.CS2MasterConnectionHB();
+		cs.ChunkServerConnection();
 		cs.ClientConnection();
 	}
 }

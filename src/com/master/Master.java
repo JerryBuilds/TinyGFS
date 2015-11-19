@@ -44,7 +44,7 @@ public class Master {
 	public static final int WRITTEN = 303;
 	public static final int UNWRITTEN = 304;
 	private boolean [] ChunkServerAvailability;
-	private static final int ChunkServerExpected = 1; // TO BE CHANGED LATER
+	private static final int ChunkServerExpected = 3; // TO BE CHANGED LATER
 	private static int ChunkServerCount = 0;
 	private static int ChunkServerHBCount = 0;
 	
@@ -1033,7 +1033,7 @@ public class Master {
 	
 	// ChunkServers connect to Master
 	// ChunkServers send heartbeat messages to Master
-	public void CS2MasterHeartbeat() {
+	public void CS2MasterConnectionHB() {
 		Runnable csTask = new Runnable() {
 			public void run() {
 				ReadAndProcessCSRequests();
@@ -1041,12 +1041,15 @@ public class Master {
 			public void ReadAndProcessCSRequests() {
 				// Wait for ChunkServer to connect heartbeat socket to Master
 				int ServerPort = 0;
+
+				int HBindex = ChunkServerHBCount;
+				ChunkServerHBCount++;
 				
 				try {
 					//Allocate a port and write it to the config file for the ChunkServer to consume
-					hbCommChannel[ChunkServerHBCount] = new ServerSocket(ServerPort);
-					ServerPort=hbCommChannel[ChunkServerHBCount].getLocalPort();
-					PrintWriter outWrite=new PrintWriter(new FileOutputStream(ChunkServer.MasterCSHBconfigFiles[ChunkServerHBCount]));
+					hbCommChannel[HBindex] = new ServerSocket(ServerPort);
+					ServerPort=hbCommChannel[HBindex].getLocalPort();
+					PrintWriter outWrite=new PrintWriter(new FileOutputStream(ChunkServer.MasterCSHBconfigFiles[HBindex]));
 					outWrite.println("localhost:"+ServerPort);
 					outWrite.close();
 				} catch (IOException ex) {
@@ -1055,19 +1058,17 @@ public class Master {
 				}
 				
 				boolean done = false;
-				int HBindex = ChunkServerHBCount;
 				
 				while (!done) {
 					try {
 						System.out.println("Waiting on incoming chunkserver heartbeat connections...");
 						
-						hbConnection[ChunkServerHBCount] = hbCommChannel[ChunkServerHBCount].accept();
-						ReadInputHB[ChunkServerHBCount] = new ObjectInputStream(hbConnection[ChunkServerHBCount].getInputStream());
-						WriteOutputHB[ChunkServerHBCount] = new ObjectOutputStream(hbConnection[ChunkServerHBCount].getOutputStream());
+						hbConnection[HBindex] = hbCommChannel[HBindex].accept();
+						ReadInputHB[HBindex] = new ObjectInputStream(hbConnection[HBindex].getInputStream());
+						WriteOutputHB[HBindex] = new ObjectOutputStream(hbConnection[HBindex].getOutputStream());
 						
 						
 						ChunkServerAvailability[HBindex] = true;
-						ChunkServerHBCount++;
 						System.out.println(ChunkServerHBCount + " out of " + ChunkServerExpected +" ChunkServers connected through HeartBeat Channel.");
 						
 						// initialize variables
@@ -1108,7 +1109,8 @@ public class Master {
 						
 					} catch (IOException e) {
 						ChunkServerAvailability[HBindex] = false;
-						System.out.println("ChunkServer HeartBeat channel disconnected");
+						System.out.println("ChunkServer " + HBindex + " HeartBeat channel disconnected");
+						break;
 					}
 				}
 				
@@ -1248,8 +1250,9 @@ public class Master {
 	public static void main(String [] args) {
 		Master ms = new Master();
 //		ms.CommandLine();
+//		ms.csInitialConnection();
 		ms.CS2MasterConnection();
-		ms.CS2MasterHeartbeat();
+		ms.CS2MasterConnectionHB();
 		ms.ReadAndProcessClientRequests();
 	}
 }
