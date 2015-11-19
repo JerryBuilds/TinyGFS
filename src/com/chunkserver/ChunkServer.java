@@ -342,6 +342,9 @@ public class ChunkServer implements ChunkServerInterface {
 									// confirm response
 									int Waiting = ReadInputHB.readInt();
 									
+									// copy to all other chunkservers
+									ChunkServerCopy(ChunkHandle, payload, offset);
+									
 									WriteOutput.writeInt(ChunkServer.TRUE);
 								}
 								else WriteOutput.writeInt(ChunkServer.FALSE);
@@ -378,7 +381,7 @@ public class ChunkServer implements ChunkServerInterface {
 	// ChunkServer writing to other ChunkServers
 	private boolean ChunkServerCopy(String chunkhandle, byte[] payload, int offset) {
 		// connect and copy data to all other ChunkServers
-		for (int i=0; i < ChunkServerNumCounter; i++) {
+		for (int i=0; i < Master.ChunkServerExpected; i++) {
 			// don't copy to self
 			if (i == ChunkServerNum) {
 				continue;
@@ -387,15 +390,15 @@ public class ChunkServer implements ChunkServerInterface {
 			// prep to connect to ChunkServer
 			int ServerPort = 0;
 			try {
-				BufferedReader binput = new BufferedReader(new FileReader(ChunkServerConfigFiles[ChunkServerNum]));
+				BufferedReader binput = new BufferedReader(new FileReader(ChunkServerConfigFiles[i]));
 				String port = binput.readLine();
 				port = port.substring( port.indexOf(':')+1 );
 				ServerPort = Integer.parseInt(port);
 				
 				// connect to ChunkServer
 				Socket csSocket = new Socket("127.0.0.1", ServerPort);
-				ObjectOutputStream WriteOutputCS = new ObjectOutputStream(MasterSocketHB.getOutputStream());
-				ObjectInputStream ReadInputCS = new ObjectInputStream(MasterSocketHB.getInputStream());
+				ObjectOutputStream WriteOutputCS = new ObjectOutputStream(csSocket.getOutputStream());
+				ObjectInputStream ReadInputCS = new ObjectInputStream(csSocket.getInputStream());
 				
 				System.out.println("ChunkServer " + ChunkServerNum + " connected to ChunkServer " + i);
 				

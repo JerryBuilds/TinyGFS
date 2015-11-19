@@ -46,7 +46,7 @@ public class Master {
 	public static final int WRITTEN = 303;
 	public static final int UNWRITTEN = 304;
 	private boolean [] ChunkServerAvailability;
-	private static final int ChunkServerExpected = 3; // TO BE CHANGED LATER
+	public static final int ChunkServerExpected = 3; // TO BE CHANGED LATER
 	private static int ChunkServerCount = 0;
 	private static int ChunkServerHBCount = 0;
 	
@@ -285,7 +285,7 @@ public class Master {
 			
 			
 			// update FH and RID
-			UpdateChunkServerStatus(fmd, ofh);
+			UpdateChunkServerStatus(fmd, ofh, fmd.RecordIDInfo.size()-1);
 			RecordID.chunkhandle = newRid.chunkhandle;
 			RecordID.byteoffset = newRid.byteoffset;
 			RecordID.size = size;
@@ -323,7 +323,7 @@ public class Master {
 				}
 				
 				// update FH and RID
-				UpdateChunkServerStatus(fmd, ofh);
+				UpdateChunkServerStatus(fmd, ofh, fmd.RecordIDInfo.size()-1);
 				RecordID.chunkhandle = newRid.chunkhandle;
 				RecordID.byteoffset = newRid.byteoffset;
 				RecordID.size = size;
@@ -350,7 +350,7 @@ public class Master {
 				}
 				
 				// update FH and RID
-				UpdateChunkServerStatus(fmd, ofh);
+				UpdateChunkServerStatus(fmd, ofh, fmd.RecordIDInfo.size()-1);
 				RecordID.chunkhandle = newRid.chunkhandle;
 				RecordID.byteoffset = newRid.byteoffset;
 				RecordID.size = size;
@@ -443,8 +443,22 @@ public class Master {
 		// get first record from first chunk
 		RID firstRid = fmd.RecordIDInfo.peekFirst();
 		
-		// update FH and RID
-		UpdateChunkServerStatus(fmd, ofh);
+		// update FH
+		UpdateChunkServerStatus(fmd, ofh, 0);
+
+		// if no ChunkServers contain record, return error
+		boolean noneWritten = true;
+		for (int i=0; i < ofh.ChunkServerStatus.size(); i++) {
+			if (ofh.ChunkServerStatus.get(i) == WRITTEN) {
+				noneWritten = false;
+				break;
+			}
+		}
+		if (noneWritten == true) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// update RID
 		RecordID.chunkhandle = firstRid.chunkhandle;
 		RecordID.byteoffset = firstRid.byteoffset;
 		RecordID.size = firstRid.size;
@@ -471,8 +485,22 @@ public class Master {
 		// get first record from first chunk
 		RID lastRid = fmd.RecordIDInfo.peekLast();
 		
-		// update FH and RID
-		UpdateChunkServerStatus(fmd, ofh);
+		// update FH
+		UpdateChunkServerStatus(fmd, ofh, fmd.RecordIDInfo.size()-1);
+		
+		// if no ChunkServers contain record, return error
+		boolean noneWritten = true;
+		for (int i=0; i < ofh.ChunkServerStatus.size(); i++) {
+			if (ofh.ChunkServerStatus.get(i) == WRITTEN) {
+				noneWritten = false;
+				break;
+			}
+		}
+		if (noneWritten == true) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// update RID
 		RecordID.chunkhandle = lastRid.chunkhandle;
 		RecordID.byteoffset = lastRid.byteoffset;
 		RecordID.size = lastRid.size;
@@ -507,8 +535,22 @@ public class Master {
 		int pivIndex = IndexOf(fmd.RecordIDInfo, pivot);
 		RID nextRid = fmd.RecordIDInfo.get(pivIndex+1);
 		
-		// update FH and RID
-		UpdateChunkServerStatus(fmd, ofh);
+		// update FH
+		UpdateChunkServerStatus(fmd, ofh, pivIndex+1);
+		
+		// if no ChunkServers contain record, return error
+		boolean noneWritten = true;
+		for (int i=0; i < ofh.ChunkServerStatus.size(); i++) {
+			if (ofh.ChunkServerStatus.get(i) == WRITTEN) {
+				noneWritten = false;
+				break;
+			}
+		}
+		if (noneWritten == true) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// update RID
 		RecordID.chunkhandle = nextRid.chunkhandle;
 		RecordID.byteoffset = nextRid.byteoffset;
 		RecordID.size = nextRid.size;
@@ -543,8 +585,22 @@ public class Master {
 		int pivIndex = IndexOf(fmd.RecordIDInfo, pivot);
 		RID nextRid = fmd.RecordIDInfo.get(pivIndex-1);
 		
-		// update FH and RID
-		UpdateChunkServerStatus(fmd, ofh);
+		// update FH
+		UpdateChunkServerStatus(fmd, ofh, pivIndex-1);
+		
+		// if no ChunkServers contain record, return error
+		boolean noneWritten = true;
+		for (int i=0; i < ofh.ChunkServerStatus.size(); i++) {
+			if (ofh.ChunkServerStatus.get(i) == WRITTEN) {
+				noneWritten = false;
+				break;
+			}
+		}
+		if (noneWritten == true) {
+			return FSReturnVals.RecDoesNotExist;
+		}
+		
+		// update RID
 		RecordID.chunkhandle = nextRid.chunkhandle;
 		RecordID.byteoffset = nextRid.byteoffset;
 		RecordID.size = nextRid.size;
@@ -1211,11 +1267,11 @@ public class Master {
 		return currentNode;
 	}
 	
-	private void UpdateChunkServerStatus(FileMD fmd, FileHandle ofh) {
+	private void UpdateChunkServerStatus(FileMD fmd, FileHandle ofh, int index) {
 		ofh.ChunkServerStatus = new ArrayList<Integer>();
 		for (int i=0; i < ChunkServerCount; i++) {
 			if (ChunkServerAvailability[i] == true) {
-				if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
+				if (fmd.ChunkServerWritten.get(i).get(index) == true) {
 					ofh.ChunkServerStatus.add(WRITTEN);
 				}
 				else {
