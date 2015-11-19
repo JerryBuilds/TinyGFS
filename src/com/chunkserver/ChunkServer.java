@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 import com.client.Client;
 import com.interfaces.ChunkServerInterface;
+import com.master.Master;
 
 /**
  * implementation of interfaces at the chunkserver side
@@ -78,11 +79,10 @@ public class ChunkServer implements ChunkServerInterface {
 	/**
 	 * Initialize the chunk server
 	 */
-	public ChunkServer(int csID){
+	public ChunkServer(){
 		// networking prep
 //		ChunkServerNum = ChunkServerNumCounter;
 //		ChunkServerNumCounter++;
-		ChunkServerNum = csID;
 		
 		// files prep
 		File dir = new File(filePath);
@@ -641,11 +641,39 @@ public class ChunkServer implements ChunkServerInterface {
 		Thread clientThread = new Thread(csTask);
 		clientThread.start();
 	}
+	
+	private void CS2MasterConnectionInitial() {
+		int ServerPort = 0;
+		
+		try {
+			// Read Config File
+			BufferedReader binput = new BufferedReader(new FileReader(Master.CSInitializationConfigFile));
+			String port = binput.readLine();
+			port = port.substring( port.indexOf(':')+1 );
+			ServerPort = Integer.parseInt(port);
+			
+			// Connect to Master
+			Socket s = new Socket("127.0.0.1", ServerPort);
+			ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+			
+			// receive ChunkServer index from Master
+			ChunkServerNum = in.readInt();
+			
+			// Disconnect from Master
+			s.close();
+			
+		} catch (FileNotFoundException e) {
+			System.out.println("Error (ChunkServer), the config file "+ Master.CSInitializationConfigFile +" containing the port of the ChunkServer is missing.");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void main(String args[])
 	{
-		ChunkServer cs = new ChunkServer(2);
+		ChunkServer cs = new ChunkServer();
 //		cs.ReadAndProcessRequests();
+		cs.CS2MasterConnectionInitial();
 		cs.CS2MasterConnection();
 		cs.CS2MasterConnectionHB();
 		cs.ChunkServerConnection();

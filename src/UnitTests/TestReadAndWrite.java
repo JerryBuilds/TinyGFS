@@ -16,8 +16,7 @@ import com.client.Client;
 
 public class TestReadAndWrite {
 
-	public static ChunkServer cs = new ChunkServer(0);
-//	public static ChunkServer cs = new ChunkServer();
+	public static ChunkServer cs = new ChunkServer();
 	public static Client client = new Client();
 	
 	/**

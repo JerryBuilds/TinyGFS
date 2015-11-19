@@ -22,6 +22,7 @@ import com.client.RID;
 public class Master {
 
 	public final static String MasterClientConfigFile = "MasterClientConfig.txt";
+	public final static String CSInitializationConfigFile = "CSInitializationConfig.txt";
 	
 	//Commands recognized by the Master from Client
 	public static final int CreateDirCMD = 201;
@@ -66,6 +67,9 @@ public class Master {
 		
 		// initializing networking content
 		ChunkServerAvailability = new boolean[ChunkServerExpected];
+		for (int i=0; i < ChunkServerExpected; i++) {
+			ChunkServerAvailability[i] = false;
+		}
 		
 		// initializing sockets
 		csCommChannel = new ServerSocket[ChunkServerExpected];
@@ -641,7 +645,7 @@ public class Master {
 	
 	
 	// open a shell to process terminal directory commands
-	public void CommandLine() {
+	private void CommandLine() {
 		Scanner scan = new Scanner(System.in);
 		String input;
 		String [] args;
@@ -698,7 +702,7 @@ public class Master {
 	}
 	
 	// process client requests through socket programming
-	public void ReadAndProcessClientRequests()
+	private void ReadAndProcessClientRequests()
 	{
 		
 		//Used for communication with the Client via the network
@@ -1033,7 +1037,7 @@ public class Master {
 	
 	// ChunkServers connect to Master
 	// ChunkServers send heartbeat messages to Master
-	public void CS2MasterConnectionHB() {
+	private void CS2MasterConnectionHB() {
 		Runnable csTask = new Runnable() {
 			public void run() {
 				ReadAndProcessCSRequests();
@@ -1126,7 +1130,7 @@ public class Master {
 	
 	// ChunkServers connect to Master
 	// ChunkServers process Master requests
-	public void CS2MasterConnection() {
+	private void CS2MasterConnection() {
 		Runnable csTask = new Runnable() {
 			public void run() {
 				
@@ -1170,6 +1174,68 @@ public class Master {
 		Thread csThread = new Thread(csTask);
 		csThread.start();
 	}
+	
+	// ChunkServers' initial connection to Master
+	// Allows Master to distribute an index to the ChunkServers
+	// will run indefinitely
+	private void CSInitialConnection() {
+		Runnable csTask = new Runnable() {
+			public void run() {
+				WaitForChunkServerInitial();
+			}
+			public void WaitForChunkServerInitial() {
+				int ServerPort = 0; // automatically ask OS to find open port
+				
+				try {
+					System.out.println("Waiting on incoming chunkserver initial connections...");
+					
+					// Open connection up to ChunkServers
+					ServerSocket ss = new ServerSocket(ServerPort);
+					ServerPort = ss.getLocalPort();
+					PrintWriter outWrite=new PrintWriter(new FileOutputStream(CSInitializationConfigFile));
+					outWrite.println("localhost:"+ServerPort);
+					outWrite.close();
+					
+					Socket s = null;
+					
+					// Service ChunkServers
+					while (true) {
+						
+						try {
+							// Wait for ChunkServers to connect
+							s = ss.accept();
+							ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+							
+							// Give ChunkServers an index
+							int index = -1;
+							for (int i=0; i < ChunkServerExpected; i++) {
+								if (ChunkServerAvailability[i] == false) {
+									index = i;
+									break;
+								}
+							}
+							out.writeInt(index);
+							out.flush();
+							
+							
+						} catch (IOException e) {
+							s.close();
+						}
+						
+					}
+					
+				} catch (IOException e) {
+					System.out.println("Error, failed to open a new socket to listen on.");
+					e.printStackTrace();
+				}
+				
+			}
+		};
+		Thread csThread = new Thread(csTask);
+		csThread.start();
+	}
+	
+	
 	
 	/*
 	 * 
@@ -1250,7 +1316,7 @@ public class Master {
 	public static void main(String [] args) {
 		Master ms = new Master();
 //		ms.CommandLine();
-//		ms.csInitialConnection();
+		ms.CSInitialConnection();
 		ms.CS2MasterConnection();
 		ms.CS2MasterConnectionHB();
 		ms.ReadAndProcessClientRequests();
