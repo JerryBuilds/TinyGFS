@@ -72,12 +72,13 @@ public class Master {
 		this.log = new Log(MasterLogFile);
 
 		if(log.logFile.length() > 0){
-			//load metada from log file
+			//load metadata from log file
 			log.Load();
-			for(Transaction t: log.transactions){
+			for(Transaction t: log.transactions.values()){
 				t.Redo();
 			}
 		}
+		System.out.println("here");
 		
 	}
 	
@@ -85,77 +86,95 @@ public class Master {
 		//LOGGING: Start transaction
 		log.Start();
 		Transaction T = new Transaction(Command.CreateDir, src, dirname, log.transactions.size()); 
-		System.out.println ( "Transaction ID for CreateDir: " + T.ID);
-		
-		// get node
-		Node newNode = GetNode(src);
-
-		if (newNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
-		
-		// check if directory already exists
-		if (newNode.GetChild(dirname) != null) {
-			return FSReturnVals.DirExists;
-		}
-		
-		
-		// add directory
-		DirectoryMD newDirectory = new DirectoryMD();
-		newDirectory.name = dirname;
-		newNode.AddChild(newDirectory);
-		
-		return FSReturnVals.Success;
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
+//		
+//		// get node
+//		Node newNode = GetNode(src);
+//
+//		if (newNode == null) {
+//			return FSReturnVals.SrcDirNotExistent;
+//		}
+//		
+//		// check if directory already exists
+//		if (newNode.GetChild(dirname) != null) {
+//			return FSReturnVals.DirExists;
+//		}
+//		
+//		
+//		// add directory
+//		DirectoryMD newDirectory = new DirectoryMD();
+//		newDirectory.name = dirname;
+//		newNode.AddChild(newDirectory);
+//		
+//		return FSReturnVals.Success;
 	}
 	
 	// src must have '/' at the end of each directory
 	public FSReturnVals DeleteDir(String src, String dirname) {
+		log.Start();
+		Transaction T = new Transaction(Command.DeleteDir, src, dirname, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
+		
 		// retrieve directory
-		Node byeNode = GetNode(src);
-		if (byeNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
-		
-		// check if directory exists
-		if (byeNode.GetChild(dirname) == null) {
-			return FSReturnVals.DirDoesNotExist;
-		}
-		
-		// if directory is not empty, CANNOT DELETE!
-		if (!byeNode.GetChild(dirname).GetChildren().isEmpty()) {
-			return FSReturnVals.DirNotEmpty;
-		}
-		
-		// delete current directory
-		byeNode.RemoveChild(dirname);
-		
-		return FSReturnVals.Success;
+//		Node byeNode = GetNode(src);
+//		if (byeNode == null) {
+//			return FSReturnVals.SrcDirNotExistent;
+//		}
+//		
+//		// check if directory exists
+//		if (byeNode.GetChild(dirname) == null) {
+//			return FSReturnVals.DirDoesNotExist;
+//		}
+//		
+//		// if directory is not empty, CANNOT DELETE!
+//		if (!byeNode.GetChild(dirname).GetChildren().isEmpty()) {
+//			return FSReturnVals.DirNotEmpty;
+//		}
+//		
+//		// delete current directory
+//		byeNode.RemoveChild(dirname);
+//		
+//		return FSReturnVals.Success;
 	}
 	
 	// src is FULL PATH of directory
 	public FSReturnVals RenameDir(String src, String NewName) {
+		log.Start();
+		Transaction T = new Transaction(Command.RenameDir, src, NewName, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
+		
+		
 		// check if both give the same number of levels and are all same up to the last one
-		ArrayList<String> path = ParsePath(src);
-		ArrayList<String> newpath = ParsePath(NewName);
-		if (path.size() != newpath.size()) {
-			return FSReturnVals.Fail;
-		}
-		for (int i=0; i < path.size()-1; i++) {
-			if (!path.get(i).equals(newpath.get(i))) {
-				return FSReturnVals.Fail;
-			}
-		}
-		
-		// get node
-		Node reNode = GetNode(src);
-		if (reNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
-		
-		// rename
-		reNode.SetName(newpath.get(newpath.size()-1));
-		
-		return FSReturnVals.Success;
+//		ArrayList<String> path = ParsePath(src);
+//		ArrayList<String> newpath = ParsePath(NewName);
+//		if (path.size() != newpath.size()) {
+//			return FSReturnVals.Fail;
+//		}
+//		for (int i=0; i < path.size()-1; i++) {
+//			if (!path.get(i).equals(newpath.get(i))) {
+//				return FSReturnVals.Fail;
+//			}
+//		}
+//		
+//		// get node
+//		Node reNode = GetNode(src);
+//		if (reNode == null) {
+//			return FSReturnVals.SrcDirNotExistent;
+//		}
+//		
+//		// rename
+//		reNode.SetName(newpath.get(newpath.size()-1));
+//		
+//		return FSReturnVals.Success;
 	}
 	
 	public String[] ListDir(String tgt) {
@@ -176,43 +195,57 @@ public class Master {
 	}
 	
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		// get node
-		Node newNode = GetNode(tgtdir);
-		if (newNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
+		log.Start();
+		Transaction T = new Transaction(Command.CreateFile, tgtdir, filename, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
 		
-		// check if directory already exists
-		if (newNode.GetChild(filename) != null) {
-			return FSReturnVals.FileExists;
-		}
-		
-		// add directory
-		FileMD newFile = new FileMD();
-		newFile.name = filename;
-		newNode.AddChild(newFile);
-		
-		return FSReturnVals.Success;
+//		// get node
+//		Node newNode = GetNode(tgtdir);
+//		if (newNode == null) {
+//			return FSReturnVals.SrcDirNotExistent;
+//		}
+//		
+//		// check if directory already exists
+//		if (newNode.GetChild(filename) != null) {
+//			return FSReturnVals.FileExists;
+//		}
+//		
+//		// add directory
+//		FileMD newFile = new FileMD();
+//		newFile.name = filename;
+//		newNode.AddChild(newFile);
+//		
+//		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		// retrieve directory
-		Node byeNode = GetNode(tgtdir);
+		log.Start();
+		Transaction T = new Transaction(Command.DeleteFile, tgtdir, filename, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
 		
-		// if directory does not exist, return error
-		if (byeNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
-		
-		// if file does not exist, return error
-		if (byeNode.GetChild(filename) == null) {
-			return FSReturnVals.FileDoesNotExist;
-		}
-		
-		// delete the file
-		byeNode.RemoveChild(filename);
-		
-		return FSReturnVals.Success;
+//		// retrieve directory
+//		Node byeNode = GetNode(tgtdir);
+//		
+//		// if directory does not exist, return error
+//		if (byeNode == null) {
+//			return FSReturnVals.SrcDirNotExistent;
+//		}
+//		
+//		// if file does not exist, return error
+//		if (byeNode.GetChild(filename) == null) {
+//			return FSReturnVals.FileDoesNotExist;
+//		}
+//		
+//		// delete the file
+//		byeNode.RemoveChild(filename);
+//		
+//		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals OpenFile(String FilePath, FileHandle ofh) {
@@ -1052,7 +1085,7 @@ public class Master {
 	 * For example, path = "/Jerry/Documents/Homework/"
 	 * will return: { "", "Jerry", "Documents", "Homework" }
 	*/
-	private ArrayList<String> ParsePath(String path) {
+	protected static ArrayList<String> ParsePath(String path) {
 		ArrayList<String> directories = new ArrayList<String>();
 		
 		int leftbound = 0, rightbound = 0;
@@ -1074,7 +1107,7 @@ public class Master {
 	
 	// returns a node
 	// or null if that node doesn't exist
-	private Node GetNode(String filepath) {
+	protected static Node GetNode(String filepath) {
 		Node currentNode = namespace.root;
 		
 		ArrayList<String> path = ParsePath(filepath);
@@ -1119,7 +1152,7 @@ public class Master {
 	public static void main(String [] args) {
 		Master ms = new Master();
 //		ms.CommandLine();
-		ms.ChunkServerConnect();
+//		ms.ChunkServerConnect();
 		ms.ReadAndProcessClientRequests();
 	}
 }

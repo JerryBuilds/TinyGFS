@@ -1,6 +1,9 @@
 package com.master;
 
+import java.util.ArrayList;
 import java.util.Scanner;
+
+import com.client.ClientFS.FSReturnVals;
 
 public class Transaction {
 	//public static int counter;
@@ -29,32 +32,110 @@ public class Transaction {
 	}
 	
 	//Redo function is idempotent
-	public void Redo(){
-
+	public FSReturnVals Redo(){
+		// get node
+		Node oldNode = Master.GetNode(oldPath);
 		switch (action){
 		case CreateDir:
 			System.out.println("Trasaction CreateDir Redo");
-			//TODO: Do CreateDir
-			break;
+
+			if (oldNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+			
+			// check if directory already exists
+			if (oldNode.GetChild(newPath) != null) {
+				return FSReturnVals.DirExists;
+			}
+			
+			// add directory
+			DirectoryMD newDirectory = new DirectoryMD();
+			newDirectory.name = newPath;
+			oldNode.AddChild(newDirectory);
+			
+			return FSReturnVals.Success;
+//			break;
 		case DeleteDir:
 			System.out.println("Trasaction DeleteDir Redo");
-			//TODO: Do DeleteDir
-			break;
+
+			if (oldNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+			
+			// check if directory exists
+			if (oldNode.GetChild(newPath) == null) {
+				return FSReturnVals.DirDoesNotExist;
+			}
+			
+			// if directory is not empty, CANNOT DELETE!
+			if (!oldNode.GetChild(newPath).GetChildren().isEmpty()) {
+				return FSReturnVals.DirNotEmpty;
+			}
+			
+			// delete current directory
+			oldNode.RemoveChild(newPath);
+			
+			return FSReturnVals.Success;
 		case RenameDir:
 			System.out.println("Trasaction RenameDir Redo");
-			//TODO: Do RenameDir
-			break;
+			ArrayList<String> path = Master.ParsePath(oldPath);
+			ArrayList<String> newpath = Master.ParsePath(newPath);
+			if (path.size() != newpath.size()) {
+				return FSReturnVals.Fail;
+			}
+			for (int i=0; i < path.size()-1; i++) {
+				if (!path.get(i).equals(newpath.get(i))) {
+					return FSReturnVals.Fail;
+				}
+			}
+			
+			if (oldNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+			
+			// rename
+			oldNode.SetName(newpath.get(newpath.size()-1));
+			
+			return FSReturnVals.Success;
+			
 		case CreateFile:
 			System.out.println("Trasaction CreateFile Redo");
-			//TODO: Do CreateFile
-			break;
+			if (oldNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+			
+			// check if directory already exists
+			if (oldNode.GetChild(newPath) != null) {
+				return FSReturnVals.FileExists;
+			}
+			
+			// add directory
+			FileMD newFile = new FileMD();
+			newFile.name = newPath;
+			oldNode.AddChild(newFile);
+			
+			return FSReturnVals.Success;
 		case DeleteFile:
 			System.out.println("Trasaction DeleteFile Redo");
-			//TODO: Do DeleteFile
-			break;
+			
+			
+			// if directory does not exist, return error
+			if (oldNode == null) {
+				return FSReturnVals.SrcDirNotExistent;
+			}
+			
+			// if file does not exist, return error
+			if (oldNode.GetChild(newPath) == null) {
+				return FSReturnVals.FileDoesNotExist;
+			}
+			
+			// delete the file
+			oldNode.RemoveChild(newPath);
+			
+			return FSReturnVals.Success;
 		default:
 			System.out.println("Trasaction type not recognized");
-			break;
+			return FSReturnVals.Fail;
 		}
 	}
 	

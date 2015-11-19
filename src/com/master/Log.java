@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 import com.master.Transaction.Command;
@@ -20,10 +21,10 @@ public class Log {
 	File logFile;
 	FileInputStream fis;
 	FileOutputStream fos;
-	ArrayList<Transaction> transactions; //a list of transactions in this log file.
+	HashMap<String, Transaction> transactions; //a list of transactions in this log file.
 	
 	public Log(String filename){
-		transactions = new ArrayList<Transaction>();
+		transactions = new HashMap<String, Transaction>();
 		this.filename = filename;
 		this.logFile = new File(filename);
 		
@@ -48,7 +49,7 @@ public class Log {
 		//append the log form of that transaction.
 		String msg = Integer.toString(transactions.size()) + ",Commit"; 
 		AddMessage(msg);
-		transactions.add(T);
+		transactions.put(T.ID, T);
 	}
 	
 	public void Start(){
@@ -87,7 +88,7 @@ public class Log {
 				line = br.readLine();
 //				System.out.println(msg);
 				if(t.toTransaction(msg)){
-					this.transactions.set(Integer.parseInt(t.ID), t);	
+					this.transactions.put(t.ID, t);	
 				}
 			}
 			
