@@ -42,7 +42,13 @@ public class Master {
 	public static final int ReadPrevRecordCMD = 214;
 	
 	//TODO: Maintain 3 file names
-	public static final String MasterLogFile = "MasterLog.txt";
+	public static final String MasterLogFile0 = "MasterLog0.txt";
+	public static final String MasterLogFile1 = "MasterLog1.txt";
+	public static final String MasterLogFile2 = "MasterLog2.txt";
+	protected static final long LogFileSize = 512000;
+	protected static final long TransactionMsgSize = 40;
+	protected static final int CHECKPOINTS = 3;
+	private static int TransactionNum;
 	
 	public static final int UP = 301;
 	public static final int DOWN = 302;
@@ -59,7 +65,9 @@ public class Master {
 	private ObjectInputStream ReadInputFromCS;
 	
 	protected static Tree namespace;
+	private ArrayList<Log> logs;
 	private Log log; 
+
 	//TODO: Update log information when the current log file meets checkpoint(too large)
 	
 	public Master() {
@@ -69,26 +77,47 @@ public class Master {
 		rootdir.name = "";
 		namespace = new Tree(rootdir);
 		//TODO: Choose a filename to pass in
-		this.log = new Log(MasterLogFile);
-
+//		logs = new Log[3];
+//		this.log = new Log(MasterLogFile);
+		TransactionNum = 0;
+		this.logs = new ArrayList<Log>();
+		logs.add(new Log(MasterLogFile0));
+		logs.add(new Log(MasterLogFile1));
+		logs.add(new Log(MasterLogFile2));
+		
+		log= logs.get(0);
+		
 		if(log.logFile.length() > 0){
 			//load metadata from log file
 			log.Load();
 			for(Transaction t: log.transactions.values()){
 				t.Redo();
+				TransactionNum = Integer.parseInt(t.ID);
 			}
 		}
 		System.out.println("here");
 		
 	}
 	
+	public void makeCheckpoint(){
+		
+		logs.get(1).rename(MasterLogFile2);
+		logs.get(0).rename(MasterLogFile1);
+//		logs.get(0).rename(MasterLogFile0);
+		logs.add(0, new Log(MasterLogFile0));
+		logs.remove(logs.size()-1);
+		log = logs.get(0);
+	}
+	
 	public FSReturnVals CreateDir(String src, String dirname) {
 		//LOGGING: Start transaction
-		log.Start();
-		Transaction T = new Transaction(Command.CreateDir, src, dirname, log.transactions.size()); 
+		Transaction T = new Transaction(Command.CreateDir, src, dirname, TransactionNum++);
+		log.Start(T);
 		System.out.println ( "T(" + T.ID + "):   CreateDir");
 		log.AddMessage(T.toString());
-		log.Commit(T);
+		if(!log.Commit(T)){
+			makeCheckpoint();
+		}
 		return T.Redo();
 //		
 //		// get node
@@ -114,11 +143,15 @@ public class Master {
 	
 	// src must have '/' at the end of each directory
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		log.Start();
+		
+		
 		Transaction T = new Transaction(Command.DeleteDir, src, dirname, log.transactions.size()); 
+		log.Start(T);
 		System.out.println ( "T(" + T.ID + "):   CreateDir");
 		log.AddMessage(T.toString());
-		log.Commit(T);
+		if(!log.Commit(T)){
+			makeCheckpoint();
+		}
 		return T.Redo();
 		
 		// retrieve directory
@@ -145,11 +178,13 @@ public class Master {
 	
 	// src is FULL PATH of directory
 	public FSReturnVals RenameDir(String src, String NewName) {
-		log.Start();
 		Transaction T = new Transaction(Command.RenameDir, src, NewName, log.transactions.size()); 
+		log.Start(T);
 		System.out.println ( "T(" + T.ID + "):   CreateDir");
 		log.AddMessage(T.toString());
-		log.Commit(T);
+		if(!log.Commit(T)){
+			makeCheckpoint();
+		}
 		return T.Redo();
 		
 		
@@ -195,11 +230,13 @@ public class Master {
 	}
 	
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		log.Start();
 		Transaction T = new Transaction(Command.CreateFile, tgtdir, filename, log.transactions.size()); 
+		log.Start(T);
 		System.out.println ( "T(" + T.ID + "):   CreateDir");
 		log.AddMessage(T.toString());
-		log.Commit(T);
+		if(!log.Commit(T)){
+			makeCheckpoint();
+		}
 		return T.Redo();
 		
 //		// get node
@@ -222,11 +259,13 @@ public class Master {
 	}
 	
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		log.Start();
 		Transaction T = new Transaction(Command.DeleteFile, tgtdir, filename, log.transactions.size()); 
+		log.Start(T);
 		System.out.println ( "T(" + T.ID + "):   CreateDir");
 		log.AddMessage(T.toString());
-		log.Commit(T);
+		if(!log.Commit(T)){
+			makeCheckpoint();
+		}
 		return T.Redo();
 		
 //		// retrieve directory

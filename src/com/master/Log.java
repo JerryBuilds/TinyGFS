@@ -33,28 +33,31 @@ public class Log {
 				this.logFile.createNewFile();	
 			}
 			this.fis = new FileInputStream(logFile);
-			this.fos = new FileOutputStream(logFile, true);
+			this.fos = new FileOutputStream(logFile, false);
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 	}
 	
-	public void Commit(Transaction T){
+	public boolean Commit(Transaction T){
 		//generate a commit log record for the transaction in the log file
 		//append the log form of that transaction.
-		String msg = Integer.toString(transactions.size()) + ",Commit"; 
+		String msg = T.ID + ",Commit"; 
 		AddMessage(msg);
 		transactions.put(T.ID, T);
+		//check size of the log file. If it reaches the size limit, make a checkpoint
+		if(logFile.length() > (Master.LogFileSize-Master.TransactionMsgSize)){
+			return false;
+		}
+		return true;
 	}
 	
-	public void Start(){
+	public void Start(Transaction T){
 		//generate a start log 
-		String msg = Integer.toString(transactions.size()) + ",Start"; 
+		String msg = T.ID + ",Start"; 
 		AddMessage(msg);
 	}
 	
@@ -101,16 +104,38 @@ public class Log {
 		
 	}
 	
+	public void rename(String filename){
+		this.filename = filename;
+		File newFile = new File(filename);
+		boolean success = this.logFile.renameTo(newFile);
+//		if(success) System.out.println("yay");
+		
+		try {
+			if(!logFile.exists()){
+				this.logFile.createNewFile();	
+			}
+			this.fis = new FileInputStream(logFile);
+			this.fos = new FileOutputStream(logFile, false);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	public static void main(String [] args) {
 		Log l = new Log("log.txt");
-		l.Start();
 		Transaction t = new Transaction(Command.CreateDir, "./", "newDir", l.transactions.size());
+		l.Start(t);
+		
 		l.AddMessage(t.toString());
 		l.Commit(t);
-		l.Start();
 		Transaction t1 = new Transaction(Command.CreateFile, "./", "newFile", l.transactions.size());
-//		l.AddMessage(t1.toString());
-//		l.Commit(t1);
+		l.Start(t1);
+
+		l.AddMessage(t1.toString());
+		l.Commit(t1);
 //		
 		l.Load();
 	}
