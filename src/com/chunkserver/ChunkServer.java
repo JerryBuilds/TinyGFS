@@ -64,10 +64,10 @@ public class ChunkServer implements ChunkServerInterface {
 	
 	// Master Connection
 	public static int ChunkServerNumCounter = 0;
-	int ChunkServerNum = -1;
-	Socket MasterSocketHB = null;
-	ObjectOutputStream WriteOutputHB = null;
-	ObjectInputStream ReadInputHB = null;
+	private int ChunkServerNum = -1;
+	private Socket MasterSocketHB = null;
+	private ObjectOutputStream WriteOutputHB = null;
+	private ObjectInputStream ReadInputHB = null;
 	
 	/**
 	 * Initialize the chunk server
@@ -323,13 +323,14 @@ public class ChunkServer implements ChunkServerInterface {
 									// some networking code with Master's HB channel
 									
 									// send command and arguments
-									/*WriteOutputHB.writeInt(ChunkServerNum);
+									WriteOutputHB.writeInt(ChunkServerNum);
 									WriteOutputHB.writeInt(offset);
 									WriteOutputHB.writeInt(payloadlength);
 									WriteOutputHB.writeUTF(ChunkHandle);
+									WriteOutputHB.flush();
 									
 									// confirm response
-									int Waiting = ReadInputHB.readInt();*/
+									int Waiting = ReadInputHB.readInt();
 									
 									WriteOutput.writeInt(ChunkServer.TRUE);
 								}
@@ -364,6 +365,7 @@ public class ChunkServer implements ChunkServerInterface {
 		clientThread.start();
 	}
 	
+	// tells Master that this one is still alive
 	public void CS2MasterConnectionHB() {
 		Runnable masterTask = new Runnable() {
 			public void run() {
@@ -382,6 +384,10 @@ public class ChunkServer implements ChunkServerInterface {
 					MasterSocketHB = new Socket("127.0.0.1", ServerPort);
 					WriteOutputHB = new ObjectOutputStream(MasterSocketHB.getOutputStream());
 					ReadInputHB = new ObjectInputStream(MasterSocketHB.getInputStream());
+					
+					System.out.println("ChunkServer " + ChunkServerNum + " connected to Master's Heartbeat Channel");
+					
+					
 				} catch (FileNotFoundException e) {
 					System.out.println("Error (ChunkServer), the config file "+ MasterCSHBconfigFiles[ChunkServerNum] +" containing the port of the ChunkServer is missing.");
 				} catch (IOException e) {
@@ -393,7 +399,8 @@ public class ChunkServer implements ChunkServerInterface {
 		masterThread.start();
 	}
 	
-	
+	// Allows Master to call CreateChunk
+	// Services Master requests
 	public void CS2MasterConnection() {
 		Runnable masterTask = new Runnable() {
 			public void run() {
@@ -417,9 +424,8 @@ public class ChunkServer implements ChunkServerInterface {
 					WriteOutput = new ObjectOutputStream(MasterSocket.getOutputStream());
 					ReadInput = new ObjectInputStream(MasterSocket.getInputStream());
 					
-					// update CS info
-					ChunkServerNum = ChunkServerNumCounter;
-					ChunkServerNumCounter++;
+					System.out.println("ChunkServer " + ChunkServerNum + " connected to Master");
+					
 					
 				} catch (FileNotFoundException e) {
 					System.out.println("Error (ChunkServer), the config file "+ MasterCSconfigFiles[ChunkServerNum] +" containing the port of the ChunkServer is missing.");
@@ -428,9 +434,10 @@ public class ChunkServer implements ChunkServerInterface {
 				}
 				
 				boolean done = false;
-
+				
+				// Allows Master to call CreateChunk
 				while (!done){
-					try {//Use the existing input and output stream as long as the client is connected
+					try {//Use the existing input and output stream as long as the master is connected
 						while (!MasterSocket.isClosed()) {
 							int payloadsize =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
 							if (payloadsize == -1) 
@@ -451,7 +458,7 @@ public class ChunkServer implements ChunkServerInterface {
 							}
 						}
 					} catch (IOException ex){
-						System.out.println("Client Disconnected");
+						System.out.println("Master Disconnected");
 					} finally {
 						try {
 							if (MasterSocket != null)
@@ -476,7 +483,7 @@ public class ChunkServer implements ChunkServerInterface {
 		ChunkServer cs = new ChunkServer();
 //		cs.ReadAndProcessRequests();
 		cs.CS2MasterConnection();
-//		cs.CS2MasterConnectionHB();
+		cs.CS2MasterConnectionHB();
 		cs.ClientConnection();
 	}
 }

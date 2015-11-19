@@ -271,7 +271,7 @@ public class Master {
 			// update metadata
 			fmd.RecordIDInfo.add(newRid);
 			for (int i=0; i < ChunkServerCount; i++) {
-				fmd.ChunkServerWritten.get(i).add(true); // TO BE CHANGED LATER
+				fmd.ChunkServerWritten.get(i).add(false); // TO BE CHANGED LATER
 				// When CS is networked with master,
 				// this value will start as UNWRITTEN
 				// and CS will use heartbeat to
@@ -283,11 +283,12 @@ public class Master {
 			ofh.ChunkServerStatus = new int[ChunkServerCount];
 			for (int i=0; i < ChunkServerCount; i++) {
 				if (ChunkServerAvailability[i] == true) {
-					ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
-													// When CS is networked with master,
-													// this value will start as UNWRITTEN
-													// and CS will use heartbeat to
-													// set it as WRITTEN
+					if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
+						ofh.ChunkServerStatus[i] = WRITTEN;
+					}
+					else {
+						ofh.ChunkServerStatus[i] = UNWRITTEN;
+					}
 				}
 				else {
 					ofh.ChunkServerStatus[i] = DOWN;
@@ -312,7 +313,7 @@ public class Master {
 				
 				// create new RID
 				RID newRid = new RID();
-				newRid.chunkhandle = csCreateChunk(); // TO BE CHANGED LATER
+				newRid.chunkhandle = csCreateChunk();
 				newRid.byteoffset = 0;
 				newRid.size = size;
 				
@@ -333,11 +334,12 @@ public class Master {
 				ofh.ChunkServerStatus = new int[ChunkServerCount];
 				for (int i=0; i < ChunkServerCount; i++) {
 					if (ChunkServerAvailability[i] == true) {
-						ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
-						// When CS is networked with master,
-						// this value will start as UNWRITTEN
-						// and CS will use heartbeat to
-						// set it as WRITTEN
+						if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
+							ofh.ChunkServerStatus[i] = WRITTEN;
+						}
+						else {
+							ofh.ChunkServerStatus[i] = UNWRITTEN;
+						}
 					}
 					else {
 						ofh.ChunkServerStatus[i] = DOWN;
@@ -361,7 +363,7 @@ public class Master {
 				// update metadata
 				fmd.RecordIDInfo.add(newRid);
 				for (int i=0; i < ChunkServerCount; i++) {
-					fmd.ChunkServerWritten.get(i).add(true); // TO BE CHANGED LATER
+					fmd.ChunkServerWritten.get(i).add(false); // TO BE CHANGED LATER
 					// When CS is networked with master,
 					// this value will start as UNWRITTEN
 					// and CS will use heartbeat to
@@ -372,11 +374,12 @@ public class Master {
 				ofh.ChunkServerStatus = new int[ChunkServerCount];
 				for (int i=0; i < ChunkServerCount; i++) {
 					if (ChunkServerAvailability[i] == true) {
-						ofh.ChunkServerStatus[i] = WRITTEN; // TO BE CHANGED LATER
-						// When CS is networked with master,
-						// this value will start as UNWRITTEN
-						// and CS will use heartbeat to
-						// set it as WRITTEN
+						if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
+							ofh.ChunkServerStatus[i] = WRITTEN;
+						}
+						else {
+							ofh.ChunkServerStatus[i] = UNWRITTEN;
+						}
 					}
 					else {
 						ofh.ChunkServerStatus[i] = DOWN;
@@ -396,9 +399,9 @@ public class Master {
 		String [] ch = new String[ChunkServerCount];
 		try {
 			for (int i=0; i < ChunkServerCount; i++) {
-				/*if (ChunkServerAvailability[i] == false) {
+				if (ChunkServerAvailability[i] == false) {
 					continue;
-				}*/
+				}
 				WriteOutputToCS[i].writeInt(ChunkServer.PayloadSZ + ChunkServer.CMDlength);
 				WriteOutputToCS[i].writeInt(ChunkServer.CreateChunkCMD);
 				WriteOutputToCS[i].flush();
@@ -411,9 +414,9 @@ public class Master {
 			}
 			
 			for (int i=0; i < ChunkServerCount; i++) {
-//				if (ChunkServerAvailability[i] == true) {
+				if (ChunkServerAvailability[i] == true) {
 					return ch[i];
-//				}
+				}
 			}
 			
 		} catch (IOException e) {
@@ -1056,11 +1059,13 @@ public class Master {
 				
 				while (!done) {
 					try {
+						System.out.println("Waiting on incoming chunkserver heartbeat connections...");
+						
 						hbConnection[ChunkServerHBCount] = hbCommChannel[ChunkServerHBCount].accept();
 						ReadInputHB[ChunkServerHBCount] = new ObjectInputStream(hbConnection[ChunkServerHBCount].getInputStream());
 						WriteOutputHB[ChunkServerHBCount] = new ObjectOutputStream(hbConnection[ChunkServerHBCount].getOutputStream());
 						
-
+						
 						ChunkServerAvailability[HBindex] = true;
 						ChunkServerHBCount++;
 						System.out.println(ChunkServerHBCount + " out of " + ChunkServerExpected +" ChunkServers connected through HeartBeat Channel.");
@@ -1097,6 +1102,7 @@ public class Master {
 							
 							// return to chunkserver
 							WriteOutputHB[HBindex].writeInt(0);
+							WriteOutputHB[HBindex].flush();
 							
 						}
 						
@@ -1150,6 +1156,7 @@ public class Master {
 					csConnection[ChunkServerCount] = csCommChannel[ChunkServerCount].accept();
 					WriteOutputToCS[ChunkServerCount] = new ObjectOutputStream(csConnection[ChunkServerCount].getOutputStream());
 					ReadInputFromCS[ChunkServerCount] = new ObjectInputStream(csConnection[ChunkServerCount].getInputStream());
+					
 					
 				} catch (IOException e) {
 					System.out.println("Error, failed to open a new socket to listen on.");
@@ -1242,7 +1249,7 @@ public class Master {
 		Master ms = new Master();
 //		ms.CommandLine();
 		ms.CS2MasterConnection();
-//		ms.CS2MasterHeartbeat();
+		ms.CS2MasterHeartbeat();
 		ms.ReadAndProcessClientRequests();
 	}
 }
