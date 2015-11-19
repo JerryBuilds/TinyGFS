@@ -19,11 +19,13 @@ import com.client.ClientFS;
 import com.client.ClientFS.FSReturnVals;
 import com.client.FileHandle;
 import com.client.RID;
+import com.master.Transaction.Command;
 
 public class Master {
 
 	public final static String MasterClientConfigFile = "MasterClientConfig.txt";
 	public final static String CSInitializationConfigFile = "CSInitializationConfig.txt";
+	public static final String MasterLogFile = "MasterLog.txt";
 	
 	//Commands recognized by the Master from Client
 	public static final int CreateDirCMD = 201;
@@ -56,7 +58,8 @@ public class Master {
 	private ObjectOutputStream [] WriteOutputToCS, WriteOutputHB;
 	private ObjectInputStream [] ReadInputFromCS, ReadInputHB;
 	
-	private Tree namespace;
+	protected static Tree namespace;
+	private Log log; 
 	private HashMap ch2file = new HashMap();
 	
 	public Master() {
@@ -65,6 +68,17 @@ public class Master {
 		DirectoryMD rootdir = new DirectoryMD();
 		rootdir.name = "";
 		namespace = new Tree(rootdir);
+		
+		//initialize logs and recover
+		this.log = new Log(MasterLogFile);
+
+		if(log.logFile.length() > 0){
+			//load metadata from log file
+			log.Load();
+			for(Transaction t: log.transactions.values()){
+				t.Redo();
+			}
+		}
 		
 		// initializing networking content
 		ChunkServerAvailability = new boolean[ChunkServerExpected];
@@ -85,73 +99,35 @@ public class Master {
 	}
 	
 	public FSReturnVals CreateDir(String src, String dirname) {
-		// get node
-		Node newNode = GetNode(src);
-		if (newNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
-		
-		// check if directory already exists
-		if (newNode.GetChild(dirname) != null) {
-			return FSReturnVals.DirExists;
-		}
-		
-		// add directory
-		DirectoryMD newDirectory = new DirectoryMD();
-		newDirectory.name = dirname;
-		newNode.AddChild(newDirectory);
-		
-		return FSReturnVals.Success;
+		//LOGGING: Start transaction
+		log.Start();
+		Transaction T = new Transaction(Command.CreateDir, src, dirname, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
 	}
 	
 	// src must have '/' at the end of each directory
 	public FSReturnVals DeleteDir(String src, String dirname) {
-		// retrieve directory
-		Node byeNode = GetNode(src);
-		if (byeNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
+		log.Start();
+		Transaction T = new Transaction(Command.DeleteDir, src, dirname, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
 		
-		// check if directory exists
-		if (byeNode.GetChild(dirname) == null) {
-			return FSReturnVals.DirDoesNotExist;
-		}
-		
-		// if directory is not empty, CANNOT DELETE!
-		if (!byeNode.GetChild(dirname).GetChildren().isEmpty()) {
-			return FSReturnVals.DirNotEmpty;
-		}
-		
-		// delete current directory
-		byeNode.RemoveChild(dirname);
-		
-		return FSReturnVals.Success;
 	}
 	
 	// src is FULL PATH of directory
 	public FSReturnVals RenameDir(String src, String NewName) {
-		// check if both give the same number of levels and are all same up to the last one
-		ArrayList<String> path = ParsePath(src);
-		ArrayList<String> newpath = ParsePath(NewName);
-		if (path.size() != newpath.size()) {
-			return FSReturnVals.Fail;
-		}
-		for (int i=0; i < path.size()-1; i++) {
-			if (!path.get(i).equals(newpath.get(i))) {
-				return FSReturnVals.Fail;
-			}
-		}
+		log.Start();
+		Transaction T = new Transaction(Command.RenameDir, src, NewName, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
 		
-		// get node
-		Node reNode = GetNode(src);
-		if (reNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
-		
-		// rename
-		reNode.SetName(newpath.get(newpath.size()-1));
-		
-		return FSReturnVals.Success;
 	}
 	
 	public String[] ListDir(String tgt) {
@@ -172,43 +148,23 @@ public class Master {
 	}
 	
 	public FSReturnVals CreateFile(String tgtdir, String filename) {
-		// get node
-		Node newNode = GetNode(tgtdir);
-		if (newNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
+		log.Start();
+		Transaction T = new Transaction(Command.CreateFile, tgtdir, filename, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
 		
-		// check if directory already exists
-		if (newNode.GetChild(filename) != null) {
-			return FSReturnVals.FileExists;
-		}
-		
-		// add directory
-		FileMD newFile = new FileMD();
-		newFile.name = filename;
-		newNode.AddChild(newFile);
-		
-		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals DeleteFile(String tgtdir, String filename) {
-		// retrieve directory
-		Node byeNode = GetNode(tgtdir);
+		log.Start();
+		Transaction T = new Transaction(Command.DeleteFile, tgtdir, filename, log.transactions.size()); 
+		System.out.println ( "T(" + T.ID + "):   CreateDir");
+		log.AddMessage(T.toString());
+		log.Commit(T);
+		return T.Redo();
 		
-		// if directory does not exist, return error
-		if (byeNode == null) {
-			return FSReturnVals.SrcDirNotExistent;
-		}
-		
-		// if file does not exist, return error
-		if (byeNode.GetChild(filename) == null) {
-			return FSReturnVals.FileDoesNotExist;
-		}
-		
-		// delete the file
-		byeNode.RemoveChild(filename);
-		
-		return FSReturnVals.Success;
 	}
 	
 	public FSReturnVals OpenFile(String FilePath, FileHandle ofh) {
@@ -1224,7 +1180,7 @@ System.out.println("RidIdnex = " + RidIndex);
 	// will return: { "", "Jerry", "Documents", "File1" }
 	// For example, path = "/Jerry/Documents/Homework/"
 	// will return: { "", "Jerry", "Documents", "Homework" }
-	private ArrayList<String> ParsePath(String path) {
+	protected static ArrayList<String> ParsePath(String path) {
 		ArrayList<String> directories = new ArrayList<String>();
 		
 		int leftbound = 0, rightbound = 0;
@@ -1246,7 +1202,7 @@ System.out.println("RidIdnex = " + RidIndex);
 	
 	// returns a node
 	// or null if that node doesn't exist
-	private Node GetNode(String filepath) {
+	protected static Node GetNode(String filepath) {
 		Node currentNode = namespace.root;
 		
 		ArrayList<String> path = ParsePath(filepath);
