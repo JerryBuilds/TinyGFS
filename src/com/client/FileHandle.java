@@ -6,6 +6,7 @@ import java.util.ArrayList;
 public class FileHandle implements Serializable {
 //	public ArrayList<RID> RIDs;
 //	public int ChunkIndex;
-	public int [] ChunkServerStatus;
+//	public int [] ChunkServerStatus;
+	public ArrayList<Integer> ChunkServerStatus;
 	public String FilePath;
 }

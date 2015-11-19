@@ -20,12 +20,12 @@ public interface ClientInterface {
 	/**
 	 * Write the byte array payload to the ChunkHandle at the specified offset.
 	 */
-	public boolean writeChunk(String ChunkHandle, byte[] payload, int offset);
+	public boolean writeChunk(String ChunkHandle, byte[] payload, int offset, int CSnum);
 	
 	/**
 	 * Read the specified NumberOfBytes from the target chunk starting at the specified offset.
 	 * Return the retrieved number of bytes as a byte array.
 	 */
-	public byte[] readChunk(String ChunkHandle, int offset, int NumberOfBytes);	
+	public byte[] readChunk(String ChunkHandle, int offset, int NumberOfBytes, int CSnum);	
 	
 }

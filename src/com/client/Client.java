@@ -128,18 +128,13 @@ public class Client implements ClientInterface {
 	/**
 	 * Write a chunk at the chunk server from the client side.
 	 */
-	public boolean writeChunk(String ChunkHandle, byte[] payload, int offset) {
+	public boolean writeChunk(String ChunkHandle, byte[] payload, int offset, int CSnum) {
 //		return ClientFS.chunkserver1.writeChunk(ChunkHandle, payload, offset);
 		if(offset + payload.length > ChunkServer.ChunkSize){
 			System.out.println("The chunk write should be within the range of the file, invalide chunk write!");
 			return false;
 		}
 		try {
-			// For testing only
-			// Randomly choose Server to read from
-			Random rng = new Random();
-			int CSnum = rng.nextInt(3);
-			
 			// Read Config File
 			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientCSconfigFiles[CSnum]));
 			String port = binput.readLine();
@@ -182,7 +177,7 @@ public class Client implements ClientInterface {
 	/**
 	 * Read a chunk at the chunk server from the client side.
 	 */
-	public byte[] readChunk(String ChunkHandle, int offset, int NumberOfBytes) {
+	public byte[] readChunk(String ChunkHandle, int offset, int NumberOfBytes, int CSnum) {
 //		return ClientFS.chunkserver1.readChunk(ChunkHandle, offset, NumberOfBytes);
 		if(NumberOfBytes + offset > ChunkServer.ChunkSize){
 			System.out.println("The chunk read should be within the range of the file, invalide chunk read!");
@@ -190,11 +185,6 @@ public class Client implements ClientInterface {
 		}
 		
 		try {
-			// For testing only
-			// Randomly choose Server to read from
-			Random rng = new Random();
-			int CSnum = rng.nextInt(3);
-			
 			// Read Config File
 			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientCSconfigFiles[CSnum]));
 			String port = binput.readLine();

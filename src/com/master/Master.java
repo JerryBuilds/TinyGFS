@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Scanner;
 
 import com.chunkserver.ChunkServer;
@@ -284,20 +285,7 @@ public class Master {
 			
 			
 			// update FH and RID
-			ofh.ChunkServerStatus = new int[ChunkServerCount];
-			for (int i=0; i < ChunkServerCount; i++) {
-				if (ChunkServerAvailability[i] == true) {
-					if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
-						ofh.ChunkServerStatus[i] = WRITTEN;
-					}
-					else {
-						ofh.ChunkServerStatus[i] = UNWRITTEN;
-					}
-				}
-				else {
-					ofh.ChunkServerStatus[i] = DOWN;
-				}
-			}
+			UpdateChunkServerStatus(fmd, ofh);
 			RecordID.chunkhandle = newRid.chunkhandle;
 			RecordID.byteoffset = newRid.byteoffset;
 			RecordID.size = size;
@@ -335,20 +323,7 @@ public class Master {
 				}
 				
 				// update FH and RID
-				ofh.ChunkServerStatus = new int[ChunkServerCount];
-				for (int i=0; i < ChunkServerCount; i++) {
-					if (ChunkServerAvailability[i] == true) {
-						if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
-							ofh.ChunkServerStatus[i] = WRITTEN;
-						}
-						else {
-							ofh.ChunkServerStatus[i] = UNWRITTEN;
-						}
-					}
-					else {
-						ofh.ChunkServerStatus[i] = DOWN;
-					}
-				}
+				UpdateChunkServerStatus(fmd, ofh);
 				RecordID.chunkhandle = newRid.chunkhandle;
 				RecordID.byteoffset = newRid.byteoffset;
 				RecordID.size = size;
@@ -375,20 +350,7 @@ public class Master {
 				}
 				
 				// update FH and RID
-				ofh.ChunkServerStatus = new int[ChunkServerCount];
-				for (int i=0; i < ChunkServerCount; i++) {
-					if (ChunkServerAvailability[i] == true) {
-						if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
-							ofh.ChunkServerStatus[i] = WRITTEN;
-						}
-						else {
-							ofh.ChunkServerStatus[i] = UNWRITTEN;
-						}
-					}
-					else {
-						ofh.ChunkServerStatus[i] = DOWN;
-					}
-				}
+				UpdateChunkServerStatus(fmd, ofh);
 				RecordID.chunkhandle = newRid.chunkhandle;
 				RecordID.byteoffset = newRid.byteoffset;
 				RecordID.size = size;
@@ -482,20 +444,7 @@ public class Master {
 		RID firstRid = fmd.RecordIDInfo.peekFirst();
 		
 		// update FH and RID
-		ofh.ChunkServerStatus = new int[ChunkServerCount];
-		for (int i=0; i < ChunkServerCount; i++) {
-			if (ChunkServerAvailability[i] == true) {
-				if (fmd.ChunkServerWritten.get(i).get(0) == true) {
-					ofh.ChunkServerStatus[i] = WRITTEN;
-				}
-				else {
-					ofh.ChunkServerStatus[i] = UNWRITTEN;
-				}
-			}
-			else {
-				ofh.ChunkServerStatus[i] = DOWN;
-			}
-		}
+		UpdateChunkServerStatus(fmd, ofh);
 		RecordID.chunkhandle = firstRid.chunkhandle;
 		RecordID.byteoffset = firstRid.byteoffset;
 		RecordID.size = firstRid.size;
@@ -523,20 +472,7 @@ public class Master {
 		RID lastRid = fmd.RecordIDInfo.peekLast();
 		
 		// update FH and RID
-		ofh.ChunkServerStatus = new int[ChunkServerCount];
-		for (int i=0; i < ChunkServerCount; i++) {
-			if (ChunkServerAvailability[i] == true) {
-				if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
-					ofh.ChunkServerStatus[i] = WRITTEN;
-				}
-				else {
-					ofh.ChunkServerStatus[i] = UNWRITTEN;
-				}
-			}
-			else {
-				ofh.ChunkServerStatus[i] = DOWN;
-			}
-		}
+		UpdateChunkServerStatus(fmd, ofh);
 		RecordID.chunkhandle = lastRid.chunkhandle;
 		RecordID.byteoffset = lastRid.byteoffset;
 		RecordID.size = lastRid.size;
@@ -572,20 +508,7 @@ public class Master {
 		RID nextRid = fmd.RecordIDInfo.get(pivIndex+1);
 		
 		// update FH and RID
-		ofh.ChunkServerStatus = new int[ChunkServerCount];
-		for (int i=0; i < ChunkServerCount; i++) {
-			if (ChunkServerAvailability[i] == true) {
-				if (fmd.ChunkServerWritten.get(i).get(pivIndex+1) == true) {
-					ofh.ChunkServerStatus[i] = WRITTEN;
-				}
-				else {
-					ofh.ChunkServerStatus[i] = UNWRITTEN;
-				}
-			}
-			else {
-				ofh.ChunkServerStatus[i] = DOWN;
-			}
-		}
+		UpdateChunkServerStatus(fmd, ofh);
 		RecordID.chunkhandle = nextRid.chunkhandle;
 		RecordID.byteoffset = nextRid.byteoffset;
 		RecordID.size = nextRid.size;
@@ -621,20 +544,7 @@ public class Master {
 		RID nextRid = fmd.RecordIDInfo.get(pivIndex-1);
 		
 		// update FH and RID
-		ofh.ChunkServerStatus = new int[ChunkServerCount];
-		for (int i=0; i < ChunkServerCount; i++) {
-			if (ChunkServerAvailability[i] == true) {
-				if (fmd.ChunkServerWritten.get(i).get(pivIndex-1) == true) {
-					ofh.ChunkServerStatus[i] = WRITTEN;
-				}
-				else {
-					ofh.ChunkServerStatus[i] = UNWRITTEN;
-				}
-			}
-			else {
-				ofh.ChunkServerStatus[i] = DOWN;
-			}
-		}
+		UpdateChunkServerStatus(fmd, ofh);
 		RecordID.chunkhandle = nextRid.chunkhandle;
 		RecordID.byteoffset = nextRid.byteoffset;
 		RecordID.size = nextRid.size;
@@ -891,8 +801,9 @@ public class Master {
 						retval = this.AppendRecord(ofh, tempRID, size);
 						
 						// return to client
-						WriteOutput.writeObject(ofh);
-						WriteOutput.flush();
+						SendFH(ofh, WriteOutput);
+//						WriteOutput.writeObject(ofh);
+//						WriteOutput.flush();
 						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
@@ -912,8 +823,9 @@ public class Master {
 						retval = this.DeleteRecord(ofh, tempRID);
 						
 						// return to client
-						WriteOutput.writeObject(ofh);
-						WriteOutput.flush();
+						SendFH(ofh, WriteOutput);
+//						WriteOutput.writeObject(ofh);
+//						WriteOutput.flush();
 						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
@@ -933,8 +845,9 @@ public class Master {
 						retval = this.ReadFirstRecord(ofh, tempRID);
 						
 						// return to client
-						WriteOutput.writeObject(ofh);
-						WriteOutput.flush();
+						SendFH(ofh, WriteOutput);
+//						WriteOutput.writeObject(ofh);
+//						WriteOutput.flush();
 						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
@@ -954,8 +867,9 @@ public class Master {
 						retval = this.ReadLastRecord(ofh, tempRID);
 						
 						// return to client
-						WriteOutput.writeObject(ofh);
-						WriteOutput.flush();
+						SendFH(ofh, WriteOutput);
+//						WriteOutput.writeObject(ofh);
+//						WriteOutput.flush();
 						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
@@ -976,8 +890,9 @@ public class Master {
 						retval = this.ReadNextRecord(ofh, pivot, tempRID);
 						
 						// return to client
-						WriteOutput.writeObject(ofh);
-						WriteOutput.flush();
+						SendFH(ofh, WriteOutput);
+//						WriteOutput.writeObject(ofh);
+//						WriteOutput.flush();
 						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
@@ -998,8 +913,9 @@ public class Master {
 						retval = this.ReadPrevRecord(ofh, pivot, tempRID);
 						
 						// return to client
-						WriteOutput.writeObject(ofh);
-						WriteOutput.flush();
+						SendFH(ofh, WriteOutput);
+//						WriteOutput.writeObject(ofh);
+//						WriteOutput.flush();
 						WriteOutput.writeObject(tempRID);
 						WriteOutput.flush();
 						
@@ -1295,6 +1211,23 @@ public class Master {
 		return currentNode;
 	}
 	
+	private void UpdateChunkServerStatus(FileMD fmd, FileHandle ofh) {
+		ofh.ChunkServerStatus = new ArrayList<Integer>();
+		for (int i=0; i < ChunkServerCount; i++) {
+			if (ChunkServerAvailability[i] == true) {
+				if (fmd.ChunkServerWritten.get(i).get(fmd.RecordIDInfo.size()-1) == true) {
+					ofh.ChunkServerStatus.add(WRITTEN);
+				}
+				else {
+					ofh.ChunkServerStatus.add(UNWRITTEN);
+				}
+			}
+			else {
+				ofh.ChunkServerStatus.add(DOWN);
+			}
+		}
+	}
+	
 	
 	// this method is here because Java is stupid
 	// RAGE RAGE RAGE
@@ -1310,6 +1243,87 @@ public class Master {
 			}
 		}
 		return index;
+	}
+	
+	// send FileHandle
+	// b/c Java is stupid and serializable hates us
+	public static void SendFH(FileHandle ofh, ObjectOutputStream out) {
+		try {
+			out.writeUTF(ofh.FilePath);
+			out.flush();
+			
+			out.writeInt(ofh.ChunkServerStatus.size());
+			out.flush();
+			for (int i=0; i < ofh.ChunkServerStatus.size(); i++) {
+				out.writeInt(ofh.ChunkServerStatus.get(i));
+				out.flush();
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// receive FileHandle
+	// b/c Java is stupid and serializable hates us
+	public static void ReceiveFH(FileHandle ofh, ObjectInputStream in) {
+		try {
+			ofh.FilePath = in.readUTF();
+			
+			int size = in.readInt();
+			int temp = -1;
+			ofh.ChunkServerStatus = new ArrayList<Integer>();
+			for (int i=0; i < size; i++) {
+				temp = in.readInt();
+				ofh.ChunkServerStatus.add(temp);
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	// Given list of possible ChunkServers,
+	// Randomly choose one
+	public static int ChooseCSread(ArrayList<Integer> csStatus) {
+		// Collect possible 
+		ArrayList<Integer> csPossible = new ArrayList<Integer>();
+		for (int i=0; i < csStatus.size(); i++) {
+			if (csStatus.get(i) == WRITTEN) {
+				csPossible.add(i);
+			}
+		}
+		
+		// if no possible values exist, return -1
+		if (csPossible.size() == 0) {
+			return -1;
+		}
+		
+		// randonly choose possible CS
+		Random rng = new Random();
+		int randIndex = rng.nextInt(csPossible.size());
+		return csPossible.get(randIndex);
+	}
+	
+	public static int ChooseCSwrite(ArrayList<Integer> csStatus) {
+		// Collect possible 
+		ArrayList<Integer> csPossible = new ArrayList<Integer>();
+		for (int i=0; i < csStatus.size(); i++) {
+			if (csStatus.get(i) != DOWN) {
+				csPossible.add(i);
+			}
+		}
+		
+		// if no possible values exist, return -1
+		if (csPossible.size() == 0) {
+			return -1;
+		}
+		
+		// randonly choose possible CS
+		Random rng = new Random();
+		int randIndex = rng.nextInt(csPossible.size());
+		return csPossible.get(randIndex);
 	}
 	
 	
