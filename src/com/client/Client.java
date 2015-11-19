@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.Random;
 
 import com.chunkserver.ChunkServer;
 import com.interfaces.ClientInterface;
@@ -65,7 +66,7 @@ public class Client implements ClientInterface {
 	 */
 	public Client(){
 		
-		if (ClientSocket != null) return; //The client is already connected
+		/*if (ClientSocket != null) return; //The client is already connected
 		try {
 			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientCSconfigFiles[0]));
 			String port = binput.readLine();
@@ -80,7 +81,7 @@ public class Client implements ClientInterface {
 		}catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Can't find file.");
-		}
+		}*/
 		
 	}
 	
@@ -90,14 +91,33 @@ public class Client implements ClientInterface {
 	public String createChunk() {
 //		return ClientFS.chunkserver1.createChunk();
 		try {
+			// Read Config File
+			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientCSconfigFiles[0]));
+			String port = binput.readLine();
+			port = port.substring( port.indexOf(':')+1 );
+			ServerPort = Integer.parseInt(port);
+			
+			// Connect to ChunkServer
+			ClientSocket = new Socket("127.0.0.1", ServerPort);
+			WriteOutput = new ObjectOutputStream(ClientSocket.getOutputStream());
+			ReadInput = new ObjectInputStream(ClientSocket.getInputStream());
+			
+			// Send Arguments
 			WriteOutput.writeInt(ChunkServer.PayloadSZ + ChunkServer.CMDlength);
 			WriteOutput.writeInt(ChunkServer.CreateChunkCMD);
 			WriteOutput.flush();
 			
+			// Receive Response
 			int ChunkHandleSize =  ReadIntFromInputStream("Client", ReadInput);
 			ChunkHandleSize -= ChunkServer.PayloadSZ;  //reduce the length by the first four bytes that identify the length
 			byte[] CHinBytes = RecvPayload("Client", ReadInput, ChunkHandleSize); 
+			
+			// Disconnect
+			ClientSocket.close();
+			
+			// Return
 			return (new String(CHinBytes)).toString();
+			
 		} catch (IOException e) {
 			System.out.println("Error in Client.createChunk:  Failed to create a chunk.");
 			e.printStackTrace();
@@ -115,6 +135,23 @@ public class Client implements ClientInterface {
 			return false;
 		}
 		try {
+			// For testing only
+			// Randomly choose Server to read from
+			Random rng = new Random();
+			int CSnum = rng.nextInt(3);
+			
+			// Read Config File
+			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientCSconfigFiles[CSnum]));
+			String port = binput.readLine();
+			port = port.substring( port.indexOf(':')+1 );
+			ServerPort = Integer.parseInt(port);
+			
+			// Connect to ChunkServer
+			ClientSocket = new Socket("127.0.0.1", ServerPort);
+			WriteOutput = new ObjectOutputStream(ClientSocket.getOutputStream());
+			ReadInput = new ObjectInputStream(ClientSocket.getInputStream());
+			
+			// Send/prepare Arguments
 			byte[] CHinBytes = ChunkHandle.getBytes();
 			
 			WriteOutput.writeInt(ChunkServer.PayloadSZ + ChunkServer.CMDlength + (2*4) + payload.length + CHinBytes.length);
@@ -125,9 +162,16 @@ public class Client implements ClientInterface {
 			WriteOutput.write(CHinBytes);
 			WriteOutput.flush();
 			
+			// Receive Response
 			int result =  Client.ReadIntFromInputStream("Client", ReadInput);
+			
+			// Disconnect
+			ClientSocket.close();
+			
+			// Return
 			if (result == ChunkServer.FALSE) return false;
 			return true;
+			
 		} catch (IOException e) {
 			System.out.println("Error in Client.createChunk:  Failed to create a chunk.");
 			e.printStackTrace();
@@ -146,6 +190,23 @@ public class Client implements ClientInterface {
 		}
 		
 		try {
+			// For testing only
+			// Randomly choose Server to read from
+			Random rng = new Random();
+			int CSnum = rng.nextInt(3);
+			
+			// Read Config File
+			BufferedReader binput = new BufferedReader(new FileReader(ChunkServer.ClientCSconfigFiles[CSnum]));
+			String port = binput.readLine();
+			port = port.substring( port.indexOf(':')+1 );
+			ServerPort = Integer.parseInt(port);
+			
+			// Connect to ChunkServer
+			ClientSocket = new Socket("127.0.0.1", ServerPort);
+			WriteOutput = new ObjectOutputStream(ClientSocket.getOutputStream());
+			ReadInput = new ObjectInputStream(ClientSocket.getInputStream());
+			
+			// Send/prepare Arguments
 			byte[] CHinBytes = ChunkHandle.getBytes();
 			WriteOutput.writeInt(ChunkServer.PayloadSZ + ChunkServer.CMDlength + (2*4) + CHinBytes.length);
 			WriteOutput.writeInt(ChunkServer.ReadChunkCMD);
@@ -154,10 +215,17 @@ public class Client implements ClientInterface {
 			WriteOutput.write(CHinBytes);
 			WriteOutput.flush();
 			
+			// Receive Response
 			int ChunkSize =  Client.ReadIntFromInputStream("Client", ReadInput);
 			ChunkSize -= ChunkServer.PayloadSZ;  //reduce the length by the first four bytes that identify the length
 			byte[] payload = RecvPayload("Client", ReadInput, ChunkSize); 
+			
+			// Disconnect
+			ClientSocket.close();
+			
+			// Return
 			return payload;
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

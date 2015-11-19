@@ -291,7 +291,8 @@ public class ChunkServer implements ChunkServerInterface {
 						
 						//Use the existing input and output stream as long as the client is connected
 						while (!ClientConnection.isClosed()) {
-							int payloadsize =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
+//							int payloadsize =  Client.ReadIntFromInputStream("ChunkServer", ReadInput);
+							int payloadsize = ReadInput.readInt();
 							if (payloadsize == -1) 
 								break;
 							int CMD = Client.ReadIntFromInputStream("ChunkServer", ReadInput);
@@ -349,7 +350,7 @@ public class ChunkServer implements ChunkServerInterface {
 								break;
 
 							default:
-								System.out.println("Error in ChunkServer, specified CMD "+CMD+" is not recognized.");
+//								System.out.println("Error in ChunkServer, specified CMD "+CMD+" is not recognized.");
 								break;
 							}
 						}
