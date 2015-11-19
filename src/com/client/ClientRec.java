@@ -19,10 +19,15 @@ public class ClientRec {
 		
 		FSReturnVals converted = null;
 		boolean clientretval = false;
+		boolean firsttime = true;
 		
 		do {
 			
 			try {
+				if (!firsttime) {
+					DeleteRecord(ofh, RecordID);
+				}
+				
 				// send command
 				ClientFS.WriteOutput.writeInt(Master.AppendRecordCMD);
 				
@@ -74,6 +79,8 @@ public class ClientRec {
 			// write to chunkserver
 	//		ClientFS.chunkserver1.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset);
 			clientretval = ClientFS.client.writeChunk(RecordID.chunkhandle, payload, RecordID.byteoffset, CSnum);
+			
+			firsttime = false;
 			
 		} while (clientretval == false);
 		

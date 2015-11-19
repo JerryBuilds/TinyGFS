@@ -27,7 +27,12 @@ import com.master.Master;
  */
 
 public class ChunkServer implements ChunkServerInterface {
-	final static String filePath = "csci485/";	//or C:\\newfile.txt
+//	final static String filePath = "csci485/";	//or C:\\newfile.txt
+	final static String [] filePaths = {
+		"csci485_0/",
+		"csci485_1/",
+		"csci485_2/"
+	};
 	public final static String ClientChunkServerConfigFile = "ClientChunkServerConfig.txt";
 	public final static String MasterChunkServerConfigFile = "MasterChunkServerConfig.txt";
 	public final static String MasterChunkServerHBConfigFile = "MasterChunkServerHBConfig.txt";
@@ -83,9 +88,10 @@ public class ChunkServer implements ChunkServerInterface {
 		// networking prep
 //		ChunkServerNum = ChunkServerNumCounter;
 //		ChunkServerNumCounter++;
+		this.CS2MasterConnectionInitial();
 		
 		// files prep
-		File dir = new File(filePath);
+		File dir = new File(filePaths[ChunkServerNum]);
 		File[] fs = dir.listFiles();
 
 		if(fs.length == 0){
@@ -116,7 +122,7 @@ public class ChunkServer implements ChunkServerInterface {
 	public boolean writeChunk(String ChunkHandle, byte[] payload, int offset) {
 		try {
 			//If the file corresponding to ChunkHandle does not exist then create it before writing into it
-			RandomAccessFile raf = new RandomAccessFile(filePath + ChunkHandle, "rw");
+			RandomAccessFile raf = new RandomAccessFile(filePaths[ChunkServerNum] + ChunkHandle, "rw");
 			raf.seek(offset);
 			raf.write(payload, 0, payload.length);
 			raf.close();
@@ -133,12 +139,12 @@ public class ChunkServer implements ChunkServerInterface {
 	public byte[] readChunk(String ChunkHandle, int offset, int NumberOfBytes) {
 		try {
 			//If the file for the chunk does not exist the return null
-			boolean exists = (new File(filePath + ChunkHandle)).exists();
+			boolean exists = (new File(filePaths[ChunkServerNum] + ChunkHandle)).exists();
 			if (exists == false) return null;
 			
 			//File for the chunk exists then go ahead and read it
 			byte[] data = new byte[NumberOfBytes];
-			RandomAccessFile raf = new RandomAccessFile(filePath + ChunkHandle, "rw");
+			RandomAccessFile raf = new RandomAccessFile(filePaths[ChunkServerNum] + ChunkHandle, "rw");
 			raf.seek(offset);
 			raf.read(data, 0, NumberOfBytes);
 			raf.close();
@@ -383,7 +389,7 @@ public class ChunkServer implements ChunkServerInterface {
 		// connect and copy data to all other ChunkServers
 		for (int i=0; i < Master.ChunkServerExpected; i++) {
 			// don't copy to self
-			if (i == ChunkServerNum) {
+			if (i == ChunkServerNum) { //|| Master.ChunkServerAvailability[i] == false) {
 				continue;
 			}
 			
@@ -425,7 +431,7 @@ public class ChunkServer implements ChunkServerInterface {
 				System.out.println("Error (ChunkServer), the config file "+ ChunkServerConfigFiles[ChunkServerNum] +" containing the port of the ChunkServer is missing.");
 			} catch (IOException e) {
 				System.out.println("Error in ChunkServer.ChunkServerCopy: Failed to copy a chunk.");
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 			
 		}
@@ -677,7 +683,6 @@ public class ChunkServer implements ChunkServerInterface {
 	{
 		ChunkServer cs = new ChunkServer();
 //		cs.ReadAndProcessRequests();
-		cs.CS2MasterConnectionInitial();
 		cs.CS2MasterConnection();
 		cs.CS2MasterConnectionHB();
 		cs.ChunkServerConnection();

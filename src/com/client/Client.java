@@ -168,8 +168,8 @@ public class Client implements ClientInterface {
 			return true;
 			
 		} catch (IOException e) {
-			System.out.println("Error in Client.createChunk:  Failed to create a chunk.");
-			e.printStackTrace();
+			System.out.println("Error in Client.writeChunk:  Failed to create a chunk.");
+//			e.printStackTrace();
 		}
 		return false;
 	}
@@ -217,8 +217,8 @@ public class Client implements ClientInterface {
 			return payload;
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Error in Client.readChunk:  Failed to create a chunk.");
+//			e.printStackTrace();
 		}
 
 		return null;
